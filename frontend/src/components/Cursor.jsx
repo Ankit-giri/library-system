@@ -1,7 +1,7 @@
 import './Cursor.css';
 
 function Cursor() {
-  return null;
+    return null;
 }
 
 export default Cursor;

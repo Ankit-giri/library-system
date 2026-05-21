@@ -1,0 +1,27 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/library_auth
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+admin-service:
+  seat-service-url: http://localhost:8084
+  payment-service-url: http://localhost:8085
+jwt:
+  secret: zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=
+  expiration:
+    student: 86400000
+    admin: 28800000
