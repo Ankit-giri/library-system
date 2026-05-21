@@ -1,3 +1,401 @@
-.student-dashboard {
-    padding: 2rem;
+/* StudentDashboard.css */
+
+.db-page { padding-bottom: var(--space-12); }
+
+/* ── Skeleton ────────────────────────────────── */
+.db-skel {
+    background: #ebebeb;
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.db-skel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 50%, transparent 100%);
+    animation: db-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes db-shimmer {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%);  }
+}
+
+.db-skel--circle { width: 2.2rem; height: 2.2rem; border-radius: 50%; }
+.db-skel--h2     { height: 2rem; }
+.db-skel--h1     { height: 1rem; }
+
+/* ── Welcome Banner ──────────────────────────── */
+.db-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    padding: var(--space-6) var(--space-8);
+    margin-bottom: var(--space-6);
+    border-radius: var(--radius-md);
+    background: linear-gradient(120deg, #e8f4fd 0%, #f5f9ff 100%);
+    border: 1px solid rgba(0, 113, 227, 0.1);
+}
+
+.db-welcome--warn {
+    background: linear-gradient(120deg, #fff4e6 0%, #fff8f0 100%);
+    border-color: rgba(255, 149, 0, 0.2);
+}
+
+.db-welcome__title {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.25rem;
+}
+
+.db-welcome__sub {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.db-welcome__cta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1.25rem;
+    background: var(--color-warning);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+
+.db-welcome__cta:hover {
+    background: #e08600;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255, 149, 0, 0.35);
+}
+
+/* ── Stat Cards ──────────────────────────────── */
+.db-stat-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-5);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+    height: 100%;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.db-stat-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+.db-stat-card--link { cursor: pointer; }
+
+.db-stat-card__icon {
+    display: block;
+    font-size: 1.5rem;
+    line-height: 1;
+    margin-bottom: var(--space-3);
+}
+
+.db-stat-card__value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+}
+
+.db-stat-card__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.db-stat-card__sub {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.db-stat-card__sub--link {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+/* ── Day colours ─────────────────────────────── */
+.db-days--green { color: var(--color-success); }
+.db-days--amber { color: var(--color-warning); }
+.db-days--red   { color: var(--color-danger); }
+
+/* ── Status Badge ────────────────────────────── */
+.db-badge {
+    display: inline-block;
+    padding: 0.25em 0.65em;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.db-badge--green { background: rgba(0, 200, 150, 0.1);  color: var(--color-success); }
+.db-badge--red   { background: rgba(255, 59, 48, 0.1);  color: var(--color-danger);  }
+.db-badge--amber { background: rgba(255, 149, 0, 0.1);  color: var(--color-warning); }
+.db-badge--grey  { background: rgba(0, 0, 0, 0.06);     color: var(--color-text-secondary); }
+
+/* ── Card container ──────────────────────────── */
+.db-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+}
+
+.db-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.db-card__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.db-card__viewall {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.db-card__viewall:hover { color: var(--color-primary-dark); }
+
+/* ── Table ───────────────────────────────────── */
+.db-table {
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    margin-bottom: 0;
+}
+
+.db-table thead th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+    background: transparent;
+}
+
+.db-table tbody td {
+    padding: 0.65rem 0.75rem;
+    vertical-align: middle;
+    border-color: var(--color-border);
+}
+
+.db-table tbody tr:last-child td { border-bottom: none; }
+
+.db-table tbody tr:hover { background: rgba(0, 113, 227, 0.02); }
+
+.db-table__empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--space-8) !important;
+    font-size: 0.875rem;
+}
+
+.db-table__date { white-space: nowrap; color: var(--color-text-secondary); }
+.db-table__slot { white-space: nowrap; font-size: 0.82rem; color: var(--color-text-secondary); }
+
+.db-table__action {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.db-table__action:hover { color: var(--color-primary-dark); }
+
+/* ── Chips / Seats ───────────────────────────── */
+.db-zone-chip {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.db-seat-num {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.db-seat-num--lg { font-size: 1.1rem; }
+
+/* ── Quick Actions ───────────────────────────── */
+.db-quick-action {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: var(--space-5);
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-border);
+    background: #fff;
+    text-decoration: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+    height: 100%;
+}
+
+.db-quick-action:hover {
+    border-color: var(--qa-color, var(--color-primary));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.db-quick-action:hover .db-quick-action__title {
+    color: var(--qa-color, var(--color-primary));
+}
+
+.db-quick-action__icon {
+    font-size: 1.75rem;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.db-quick-action__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    transition: color 0.15s ease;
+}
+
+.db-quick-action__desc {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+/* ── Sidebar: Next Booking ───────────────────── */
+.db-next {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.db-next__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-1);
+}
+
+.db-next__info {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+/* ── Sidebar: Zone Availability ──────────────── */
+.db-zones { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.db-zone-row { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.db-zone-row__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.db-zone-row__name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.db-zone-row__count {
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+}
+
+.db-zone-bar {
+    width: 100%;
+    height: 5px;
+    background: var(--color-border);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.db-zone-bar__fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Live badge ──────────────────────────────── */
+.db-live-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-success);
+    letter-spacing: 0.02em;
+    animation: db-pulse 2s ease-in-out infinite;
+}
+
+@keyframes db-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+/* ── Misc ────────────────────────────────────── */
+.db-sidebar-empty {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    text-align: center;
+    padding: var(--space-4) 0;
+}
+
+.db-inline-link {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.db-inline-link:hover {
+    text-decoration: underline;
+    color: var(--color-primary-dark);
 }

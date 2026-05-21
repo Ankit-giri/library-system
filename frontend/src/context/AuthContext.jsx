@@ -14,8 +14,9 @@ export function AuthProvider({ children }) {
     const isAuthenticated = !!token;
     const isAdmin = currentUser?.role === 'ADMIN';
 
-    const login = useCallback(async (email, password) => {
-        const { data } = await api.post('/api/auth/login', { email, password });
+    const login = useCallback(async (email, password, options = {}) => {
+        const endpoint = options.isAdmin ? '/api/auth/admin/login' : '/api/auth/login';
+        const { data } = await api.post(endpoint, { email, password });
         localStorage.setItem('libraryToken', data.token);
         localStorage.setItem('libraryRole', data.role);
         localStorage.setItem('libraryUser', JSON.stringify(data.user));
