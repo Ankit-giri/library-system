@@ -14,15 +14,31 @@ export function AuthProvider({ children }) {
     const isAuthenticated = !!token;
     const isAdmin = currentUser?.role === 'ADMIN';
 
-    const login = useCallback(async (email, password, options = {}) => {
-        const endpoint = options.isAdmin ? '/api/auth/admin/login' : '/api/auth/login';
-        const { data } = await api.post(endpoint, { email, password });
-        localStorage.setItem('libraryToken', data.token);
-        localStorage.setItem('libraryRole', data.role);
-        localStorage.setItem('libraryUser', JSON.stringify(data.user));
-        setToken(data.token);
-        setCurrentUser(data.user);
-        return data;
+    const login = useCallback(async (email, password) => {
+        // ISSUE-1 fix: single /api/auth/login endpoint handles all roles
+        const { data } = await api.post('/api/auth/login', { email, password });
+        // ISSUE-2 fix: API returns ApiResponse<AuthResponse> wrapper; real data is at data.data
+        const auth = data.data;
+
+        // Set token in localStorage before fetching profile so the interceptor picks it up
+        localStorage.setItem('libraryToken', auth.token);
+        localStorage.setItem('libraryRole', auth.role);
+        setToken(auth.token);
+
+        // Fetch full profile to get fullName, studentId, email
+        const profileRes = await api.get('/api/auth/me');
+        const profile = profileRes.data.data;
+        const user = {
+            userId: auth.userId,
+            role: auth.role,
+            expiresAt: auth.expiresAt,
+            fullName: profile.fullName,
+            studentId: profile.studentId,
+            email: profile.email,
+        };
+        localStorage.setItem('libraryUser', JSON.stringify(user));
+        setCurrentUser(user);
+        return auth;
     }, []);
 
     const register = useCallback(async (payload) => {

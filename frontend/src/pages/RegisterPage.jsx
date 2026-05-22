@@ -92,8 +92,9 @@ function RegisterPage() {
 
         setLoading(true);
         try {
+            // ISSUE-6 fix: RegisterRequest expects 'fullName', not 'name'
             await register({
-                name: fields.fullName,
+                fullName: fields.fullName,
                 studentId: fields.studentId,
                 email: fields.email,
                 password: fields.password,

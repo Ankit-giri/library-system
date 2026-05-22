@@ -1,0 +1,198 @@
+version: "3.8"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Library Management System — Docker Compose
+#
+#  Quick start:
+#    cp .env.example .env        # fill in secrets
+#    docker-compose up --build
+#
+#  Services:
+#    postgres             → localhost:5432  (single shared DB: librarydb)
+#    auth-service         → localhost:8081
+#    student-service      → localhost:8082
+#    seat-service         → localhost:8083
+#    payment-service      → localhost:8084
+#    notification-service → localhost:8085
+#    admin-service        → localhost:8086
+#    api-gateway          → localhost:8080  ← single entry point for all APIs
+#    frontend             → localhost:3000
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: library-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: librarydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d librarydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Auth Service (port 8081) ───────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: library-auth-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Student Service (port 8082) ────────────────────────────────────────────
+  student-service:
+    build:
+      context: ./student-service
+      dockerfile: Dockerfile
+    container_name: library-student-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Seat Service (port 8083) ───────────────────────────────────────────────
+  seat-service:
+    build:
+      context: ./seat-service
+      dockerfile: Dockerfile
+    container_name: library-seat-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      payment-service:
+        condition: service_started
+
+  # ── Payment Service (port 8084) ────────────────────────────────────────────
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: library-payment-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Notification Service (port 8085) ──────────────────────────────────────
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: library-notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+      AUTH_SERVICE_URL: http://auth-service:8081
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  # ── Admin Service (port 8086) ──────────────────────────────────────────────
+  admin-service:
+    build:
+      context: ./admin-service
+      dockerfile: Dockerfile
+    container_name: library-admin-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/librarydb
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-zQJ0ZpPt4mPZVYh0Zc1nOe2P0ySmx3Ee2TPu3C5g8KU=}
+      SEAT_SERVICE_URL: http://seat-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seat-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+
+  # ── API Gateway (port 8080) ────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: library-api-gateway
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - student-service
+      - seat-service
+      - payment-service
+      - notification-service
+      - admin-service
+
+  # ── Frontend (port 3000 → nginx:80) ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
+    container_name: library-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+    driver: local

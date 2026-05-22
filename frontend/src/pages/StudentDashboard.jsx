@@ -23,7 +23,6 @@ function daysUntilDate(isoDate) {
 /* ── Sub-components ──────────────────────────── */
 function StatusBadge({ status }) {
     const map = {
-        CONFIRMED:  { cls: 'db-badge--green',  text: 'Confirmed' },
         ACTIVE:     { cls: 'db-badge--green',  text: 'Active' },
         COMPLETED:  { cls: 'db-badge--grey',   text: 'Completed' },
         CANCELLED:  { cls: 'db-badge--red',    text: 'Cancelled' },
@@ -86,26 +85,66 @@ function StudentDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const [dashRes, bookingsRes, seatsRes] = await Promise.all([
-                api.get('/api/dashboard'),
-                api.get('/api/bookings/my?page=0&size=5&sort=date,desc'),
-                api.get('/api/seats/availability'),
+            const studentId = currentUser?.studentId;
+            // ISSUE-7 fix: /api/dashboard doesn't exist; construct from real endpoints
+            // ISSUE-8 fix: /api/seats/availability requires date+slot params; use /api/seats instead
+            const [bookingsRes, membershipRes, seatsRes] = await Promise.all([
+                api.get('/api/bookings/my?page=0&size=5'),
+                studentId
+                    ? api.get('/api/payments/my-membership', {
+                          headers: { 'X-Student-Id': studentId },
+                      })
+                    : Promise.resolve({ data: null }),
+                api.get('/api/seats'),
             ]);
+
+            const recentBookings = bookingsRes.data?.content ?? [];
+            const totalBookings  = bookingsRes.data?.totalElements ?? 0;
+            const membership     = membershipRes.data ?? {};
+
+            // Build zone availability stats from the full seat list
+            const allSeats = Array.isArray(seatsRes.data) ? seatsRes.data : [];
+            const zoneMap  = {};
+            allSeats.forEach((s) => {
+                if (!zoneMap[s.zone]) zoneMap[s.zone] = { zone: s.zone, total: 0, available: 0 };
+                zoneMap[s.zone].total++;
+                if (s.status === 'AVAILABLE') zoneMap[s.zone].available++;
+            });
+
+            const upcomingBookings = recentBookings.filter((b) => b.status === 'ACTIVE').length;
+            const nextBooking      = recentBookings.find((b)  => b.status === 'ACTIVE') ?? null;
+
+            // Derive membership status from the DTO fields
+            let membershipStatus = 'ACTIVE';
+            if (!membership.active) {
+                membershipStatus = 'EXPIRED';
+            } else if (
+                membership.expiryDate &&
+                new Date(membership.expiryDate) - new Date() < 7 * 86_400_000
+            ) {
+                membershipStatus = 'EXPIRING_SOON';
+            }
+
             setData({
-                ...dashRes.data,
-                recentBookings: bookingsRes.data?.content ?? bookingsRes.data ?? [],
-                zoneAvailability: seatsRes.data ?? [],
+                totalBookings,
+                upcomingBookings,
+                membershipStatus,
+                membershipExpiryDate: membership.expiryDate ?? null,
+                recentBookings,
+                zoneAvailability: Object.values(zoneMap),
+                nextBooking,
             });
         } catch {
             setError('Failed to load dashboard data.');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [currentUser?.studentId]);
 
     useEffect(() => { load(); }, [load]);
 
-    const firstName = currentUser?.name?.split(' ')[0] ?? 'Student';
+    // ISSUE-11 fix: currentUser stores fullName (not name)
+    const firstName = currentUser?.fullName?.split(' ')[0] ?? 'Student';
     const days = daysUntilDate(data.membershipExpiryDate);
     const isExpiringSoon = !loading && days < 7;
     const isExpired = !loading && data.membershipStatus === 'EXPIRED';
@@ -249,12 +288,14 @@ function StudentDashboard() {
                                                         <span className="db-zone-chip">{b.zone}</span>
                                                     </td>
                                                     <td className="db-table__date">
-                                                        {formatRelativeDay(b.date)}
+                                                        {/* ISSUE-9 fix: field is bookingDate, not date */}
+                                                        {formatRelativeDay(b.bookingDate)}
                                                     </td>
                                                     <td className="db-table__slot">{b.timeSlot}</td>
                                                     <td><StatusBadge status={b.status} /></td>
                                                     <td>
-                                                        {b.status === 'CONFIRMED' && (
+                                                        {/* ISSUE-10 fix: BookingStatus enum value is ACTIVE, not CONFIRMED */}
+                                                        {b.status === 'ACTIVE' && (
                                                             <Link
                                                                 to="/my-bookings"
                                                                 className="db-table__action"
@@ -335,7 +376,8 @@ function StudentDashboard() {
                                             <span className="db-zone-chip">{data.nextBooking.zone}</span>
                                         </div>
                                         <p className="db-next__info">
-                                            📅 {formatRelativeDay(data.nextBooking.date)}
+                                            {/* ISSUE-11 fix: field is bookingDate */}
+                                            📅 {formatRelativeDay(data.nextBooking.bookingDate)}
                                         </p>
                                         <p className="db-next__info">
                                             🕐 {data.nextBooking.timeSlot}

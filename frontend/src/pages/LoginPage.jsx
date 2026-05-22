@@ -40,7 +40,8 @@ function LoginPage() {
         setLoading(true);
         setFormError('');
         try {
-            await login(fields.identifier, fields.password, { isAdmin: isAdminMode });
+            // login() uses /api/auth/login for all roles; role is determined by the JWT
+            await login(fields.identifier, fields.password);
             toast.success(isAdminMode ? 'Admin login successful.' : 'Welcome back!');
             const returnTo = searchParams.get('returnTo');
             navigate(returnTo ? decodeURIComponent(returnTo) : '/dashboard', { replace: true });

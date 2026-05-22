@@ -11,6 +11,7 @@ spring:
           '[/**]':
             allowedOrigins:
               - http://localhost:3000
+              - http://localhost:5173
             allowedHeaders:
               - '*'
             allowedMethods:
@@ -26,23 +27,52 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
+
         - id: student-service
           uri: http://localhost:8082
           predicates:
             - Path=/api/students/**
-        - id: seat-service
+
+        - id: seat-availability
           uri: http://localhost:8083
           predicates:
             - Path=/api/seats/**
+
+        - id: bookings
+          uri: http://localhost:8083
+          predicates:
             - Path=/api/bookings/**
+
+        - id: admin-bookings
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/admin/bookings/**
+
+        - id: admin-seats
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/admin/seats/**
+
         - id: payment-service
           uri: http://localhost:8084
           predicates:
             - Path=/api/payments/**
+
+        - id: admin-reports
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/admin/reports/**
+
         - id: notification-service
           uri: http://localhost:8085
           predicates:
             - Path=/api/notifications/**
+
+        - id: admin-emails
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/admin/emails/**
+
         - id: admin-service
           uri: http://localhost:8086
           predicates:

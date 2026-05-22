@@ -54,8 +54,8 @@ function Navbar() {
         navigate('/login');
     };
 
-    const initials = currentUser?.name
-        ? currentUser.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+    const initials = currentUser?.fullName
+        ? currentUser.fullName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
         : 'U';
 
     return (
@@ -129,7 +129,7 @@ function Navbar() {
                                 onClick={() => setDropdownOpen((v) => !v)}
                                 aria-haspopup="true"
                                 aria-expanded={dropdownOpen}
-                                title={currentUser?.name || 'Account'}
+                                title={currentUser?.fullName || 'Account'}
                             >
                                 {initials}
                             </button>
@@ -137,7 +137,7 @@ function Navbar() {
                             {dropdownOpen && (
                                 <div className="lib-dropdown" role="menu">
                                     <div className="lib-dropdown__header">
-                                        <span className="lib-dropdown__name">{currentUser?.name || 'User'}</span>
+                                        <span className="lib-dropdown__name">{currentUser?.fullName || 'User'}</span>
                                         <span className="lib-dropdown__email">{currentUser?.email}</span>
                                     </div>
                                     <div className="lib-dropdown__divider" />

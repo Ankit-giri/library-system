@@ -6,6 +6,7 @@ import { NotificationProvider } from './context/NotificationContext';
 
 /* Layout + route guards */
 import Layout from './components/Layout';
+import AdminLayout from './components/AdminLayout';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -49,8 +50,8 @@ function App() {
                             <Route path="/notifications" element={<NotificationsPage />} />
                         </Route>
 
-                        {/* ── Admin routes — wrapped in AdminRoute + Layout ── */}
-                        <Route element={<AdminRoute><Layout /></AdminRoute>}>
+                        {/* ── Admin routes — wrapped in AdminRoute + AdminLayout (sidebar) ── */}
+                        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
                             <Route path="/admin" element={<AdminDashboard />} />
                             <Route path="/admin/students" element={<AdminStudentsPage />} />
                             <Route path="/admin/bookings" element={<AdminBookingsPage />} />

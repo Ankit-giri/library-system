@@ -14,9 +14,10 @@ const TIME_SLOTS = [
     { id: 'EVENING',   label: 'Evening',   time: '3 PM – 6 PM'   },
 ];
 
-const ZONES = ['All', 'Quiet', 'Group', 'Computers'];
+// SeatZone enum values: QUIET, GROUP, SILENT, OPEN
+const ZONES = ['All', 'Quiet', 'Group', 'Silent', 'Open'];
 
-const ZONE_INITIAL = { Quiet: 'Q', Group: 'G', Computers: 'C' };
+const ZONE_INITIAL = { Quiet: 'Q', Group: 'G', Silent: 'S', Open: 'O' };
 
 function todayStr() {
     return new Date().toISOString().split('T')[0];
@@ -148,8 +149,9 @@ function SeatBookingPage() {
         setHasSearched(true);
 
         try {
-            const params = new URLSearchParams({ date, timeSlot });
-            if (zone !== 'All') params.set('zone', zone);
+            // ISSUE-12 fix: backend expects 'slot', not 'timeSlot' as the query param name
+            const params = new URLSearchParams({ date, slot: timeSlot });
+            if (zone !== 'All') params.set('zone', zone.toUpperCase());
             const { data } = await api.get(`/api/seats/availability?${params}`);
             setSeats(Array.isArray(data) ? data : (data.seats ?? []));
         } catch (err) {
@@ -169,9 +171,10 @@ function SeatBookingPage() {
         if (!selectedSeat) return;
         setBooking(true);
         try {
+            // ISSUE-13 fix: BookingRequest expects 'bookingDate', not 'date'
             await api.post('/api/bookings', {
-                seatId:   selectedSeat.id,
-                date,
+                seatId:      selectedSeat.id,
+                bookingDate: date,
                 timeSlot,
             });
             const slotObj = TIME_SLOTS.find(s => s.id === timeSlot);
@@ -369,7 +372,7 @@ function SeatBookingPage() {
                                     : '—'}
                             </span>
                             <span className="sb-bar__sep">·</span>
-                            <span>👤&nbsp;{currentUser?.name ?? '—'}</span>
+                            <span>👤&nbsp;{currentUser?.fullName ?? '—'}</span>
                         </div>
                     </div>
 

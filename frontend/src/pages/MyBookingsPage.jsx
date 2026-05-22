@@ -29,20 +29,21 @@ function slotStartDate(date, timeSlot) {
     return d;
 }
 
+// ISSUE-14+15 fix: BookingStatus enum value is 'ACTIVE' not 'CONFIRMED'; field is bookingDate not date
 function canCancel(booking) {
-    if (booking.status !== 'CONFIRMED') return false;
-    return slotStartDate(booking.date, booking.timeSlot) - Date.now() > 60 * 60 * 1000;
+    if (booking.status !== 'ACTIVE') return false;
+    return slotStartDate(booking.bookingDate, booking.timeSlot) - Date.now() > 60 * 60 * 1000;
 }
 
 function isPastWindow(booking) {
-    if (booking.status !== 'CONFIRMED') return false;
-    const diff = slotStartDate(booking.date, booking.timeSlot) - Date.now();
+    if (booking.status !== 'ACTIVE') return false;
+    const diff = slotStartDate(booking.bookingDate, booking.timeSlot) - Date.now();
     return diff > 0 && diff <= 60 * 60 * 1000;
 }
 
 function isFuture(booking) {
-    if (booking.status !== 'CONFIRMED') return false;
-    const d = new Date(booking.date);
+    if (booking.status !== 'ACTIVE') return false;
+    const d = new Date(booking.bookingDate);
     d.setHours(23, 59, 59, 999);
     return d >= Date.now();
 }
@@ -62,7 +63,7 @@ function pageRange(current, total) {
 /* ── Status Badge ────────────────────────────── */
 function StatusBadge({ status }) {
     const cfg = {
-        CONFIRMED: { cls: 'mb-badge--green', text: 'Confirmed' },
+        ACTIVE:    { cls: 'mb-badge--green', text: 'Active'    },
         COMPLETED: { cls: 'mb-badge--grey',  text: 'Completed' },
         CANCELLED: { cls: 'mb-badge--red',   text: 'Cancelled' },
         PENDING:   { cls: 'mb-badge--amber', text: 'Pending'   },
@@ -114,8 +115,9 @@ function CancelModal({ booking, windowPassed, cancelling, onClose, onConfirm }) 
                         <span className="mb-modal__icon">🗑️</span>
                         <h3 className="mb-modal__title" id="cancel-title">Cancel Booking?</h3>
                         <p className="mb-modal__body">
+                            {/* ISSUE-18 fix: field is bookingDate */}
                             Cancel your booking for <strong>Seat {booking.seatNumber}</strong> on{' '}
-                            <strong>{formatDate(booking.date)}</strong>
+                            <strong>{formatDate(booking.bookingDate)}</strong>
                             {slot ? ` · ${slot.label}` : ''}?
                             This cannot be undone.
                         </p>
@@ -170,7 +172,7 @@ function DetailModal({ booking, onClose }) {
                 <div className="mb-detail-grid">
                     {[
                         { label: 'Zone',      value: booking.zone },
-                        { label: 'Date',      value: formatDate(booking.date) },
+                        { label: 'Date',      value: formatDate(booking.bookingDate) },
                         { label: 'Time Slot', value: <>{slot?.label ?? booking.timeSlot}<br /><small className="text-muted">{slot?.time}</small></> },
                         { label: 'Duration',  value: '3 hours' },
                         { label: 'Booked On', value: booking.createdAt ? formatDateTime(booking.createdAt) : '—' },
@@ -235,7 +237,8 @@ function MyBookingsPage() {
         setLoading(true);
         try {
             const params = new URLSearchParams({ page, size: PAGE_SIZE });
-            if (filter === 'UPCOMING')      params.set('status', 'CONFIRMED');
+            // ISSUE-16 fix: BookingStatus enum value is ACTIVE, not CONFIRMED
+            if (filter === 'UPCOMING')      params.set('status', 'ACTIVE');
             else if (filter !== 'ALL')      params.set('status', filter);
             if (debSearch.trim())           params.set('search', debSearch.trim());
 
@@ -394,7 +397,8 @@ function MyBookingsPage() {
                                                 <span className="mb-zone-chip">{b.zone}</span>
                                             </td>
                                             <td className="mb-table__date">
-                                                {formatDate(b.date)}
+                                                {/* ISSUE-17 fix: field is bookingDate */}
+                                                {formatDate(b.bookingDate)}
                                             </td>
                                             <td>
                                                 <span className="mb-slot-name">

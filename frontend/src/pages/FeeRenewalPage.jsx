@@ -2,12 +2,24 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+
 import PageHeader from '../components/PageHeader';
 import { formatDate } from '../utils/formatDate';
 import './FeeRenewalPage.css';
 
 /* ── Plan definitions ────────────────────────── */
+// ISSUE-19 fix: SEMESTER and ANNUAL don't exist in backend PaymentPlan enum.
+// Actual plans: WEEKLY(79/7d), MONTHLY(199/30d), QUARTERLY(549/90d), YEARLY(1999/365d)
 const PLANS = [
+    {
+        id: 'WEEKLY',
+        title: 'Weekly',
+        price: 79,
+        priceLabel: '₹79',
+        period: '/week',
+        days: 7,
+        features: ['7 days full access', 'Seat booking', 'Digital resources'],
+    },
     {
         id: 'MONTHLY',
         title: 'Monthly',
@@ -18,28 +30,28 @@ const PLANS = [
         features: ['30 days full access', 'Seat booking', 'Digital resources'],
     },
     {
-        id: 'SEMESTER',
-        title: 'Semester',
-        price: 799,
-        priceLabel: '₹799',
-        period: '/6 months',
-        days: 180,
-        savings: '₹395',
+        id: 'QUARTERLY',
+        title: 'Quarterly',
+        price: 549,
+        priceLabel: '₹549',
+        period: '/3 months',
+        days: 90,
+        savings: '₹48',
         featured: true,
-        features: ['180 days full access', 'Seat booking', 'Digital resources', 'Priority support'],
+        features: ['90 days full access', 'Seat booking', 'Digital resources', 'Priority support'],
     },
     {
-        id: 'ANNUAL',
-        title: 'Annual',
-        price: 1299,
-        priceLabel: '₹1,299',
+        id: 'YEARLY',
+        title: 'Yearly',
+        price: 1999,
+        priceLabel: '₹1,999',
         period: '/year',
         days: 365,
         features: ['365 days full access', 'Seat booking', 'Digital resources', 'Priority support', 'Exclusive study rooms'],
     },
 ];
 
-const PLAN_LABELS = { MONTHLY: 'Monthly', SEMESTER: 'Semester', ANNUAL: 'Annual' };
+const PLAN_LABELS = { WEEKLY: 'Weekly', MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', YEARLY: 'Yearly' };
 
 const CONFETTI_COLORS = ['#0071e3', '#00c896', '#ff9500', '#ff3b30', '#af52de', '#ffd60a', '#34aadc', '#ff6b6b'];
 
@@ -142,6 +154,7 @@ function StatusSkeleton() {
    Payment Modal
 ════════════════════════════════════════════════ */
 function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
+    const { currentUser } = useAuth();
     const [step, setStep]             = useState('form');
     const [cardName, setCardName]     = useState('');
     const [cardNum, setCardNum]       = useState('');
@@ -168,14 +181,23 @@ function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
         }
 
         const last4 = digits.slice(-4);
+        const studentId = currentUser?.studentId;
         try {
-            const { data: init }    = await api.post('/api/payments/initiate', { planId: plan.id });
-            const { data: confirm } = await api.post('/api/payments/confirm', {
-                paymentId: init.paymentId,
-                cardLast4: last4,
+            // ISSUE-21 fix: plan as query param + X-Student-Id header; no request body
+            const { data: init } = await api.post(
+                `/api/payments/initiate?plan=${plan.id}`,
+                null,
+                { headers: { 'X-Student-Id': studentId } }
+            );
+            // ISSUE-22 fix: correct field names: sessionId, cardLastFour, simulateSuccess
+            await api.post('/api/payments/confirm', {
+                sessionId:       init.sessionId,
+                cardLastFour:    last4,
+                simulateSuccess: !simulate,
             });
-            const resolvedExpiry = confirm.newExpiryDate || newExpiry;
-            const txnId = confirm.transactionId || `TXN${Date.now()}`;
+            // ISSUE-23 fix: confirm returns 200 void — compute expiry locally
+            const resolvedExpiry = calcNewExpiry(membership?.expiryDate, plan.days, isExpired);
+            const txnId = `TXN${Date.now()}`;
             setSuccess({ newExpiryDate: resolvedExpiry, transactionId: txnId, last4 });
             onMembershipUpdate({ plan: plan.id, expiryDate: resolvedExpiry, days: plan.days });
             setStep('success');
@@ -353,15 +375,35 @@ function FeeRenewalPage() {
     const fetchStatus = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/api/membership/status');
-            setMembership(data.membership ?? data);
-            setHistory(data.paymentHistory ?? data.history ?? []);
+            const studentId = currentUser?.studentId;
+            if (!studentId) { setLoading(false); return; }
+
+            // ISSUE-20 fix: endpoint is /api/payments/my-membership with X-Student-Id header
+            const [membershipRes, historyRes] = await Promise.all([
+                api.get('/api/payments/my-membership', { headers: { 'X-Student-Id': studentId } }),
+                api.get('/api/payments/history',       { headers: { 'X-Student-Id': studentId } }),
+            ]);
+
+            const m = membershipRes.data;
+            // MembershipStatusDTO: { active, expiryDate, plan }
+            const daysRemaining = m.expiryDate
+                ? Math.max(0, Math.ceil((new Date(m.expiryDate) - new Date()) / 86_400_000))
+                : 0;
+            const planDef = PLANS.find((p) => p.id === m.plan);
+            setMembership({
+                status:       m.active ? 'ACTIVE' : 'EXPIRED',
+                expiryDate:   m.expiryDate ?? null,
+                plan:         m.plan ?? null,
+                daysRemaining,
+                totalDays:    planDef?.days ?? 30,
+            });
+            setHistory(historyRes.data ?? []);
         } catch {
             toast.error('Failed to load membership status.');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [currentUser?.studentId]);
 
     useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
@@ -400,7 +442,7 @@ function FeeRenewalPage() {
                     {/* Header row */}
                     <div className="fr-stat-header">
                         <div>
-                            <h3 className="fr-student-name">{currentUser?.name ?? '—'}</h3>
+                            <h3 className="fr-student-name">{currentUser?.fullName ?? '—'}</h3>
                             <p className="fr-student-meta">
                                 <span className="fr-id">
                                     ID: {currentUser?.studentId ?? membership?.studentId ?? '—'}
