@@ -9,6 +9,7 @@ import com.library.auth.repository.UserRepository;
 import com.library.auth.security.JwtUtil;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import org.springframework.context.annotation.Lazy;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,7 +35,7 @@ public class AuthService implements UserDetailsService {
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            AuthenticationManager authenticationManager) {
+            @Lazy AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
