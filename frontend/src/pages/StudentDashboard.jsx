@@ -88,7 +88,7 @@ function StudentDashboard() {
             const studentId = currentUser?.studentId;
             // ISSUE-7 fix: /api/dashboard doesn't exist; construct from real endpoints
             // ISSUE-8 fix: /api/seats/availability requires date+slot params; use /api/seats instead
-            const [bookingsRes, membershipRes, seatsRes] = await Promise.all([
+            const [bookingsRes, membershipRes, seatsRes, upcomingRes] = await Promise.all([
                 api.get('/api/bookings/my?page=0&size=5'),
                 studentId
                     ? api.get('/api/payments/my-membership', {
@@ -96,6 +96,7 @@ function StudentDashboard() {
                       })
                     : Promise.resolve({ data: null }),
                 api.get('/api/seats'),
+                api.get('/api/bookings/my?page=0&size=1&status=ACTIVE'),
             ]);
 
             const recentBookings = bookingsRes.data?.content ?? [];
@@ -111,7 +112,7 @@ function StudentDashboard() {
                 if (s.status === 'AVAILABLE') zoneMap[s.zone].available++;
             });
 
-            const upcomingBookings = recentBookings.filter((b) => b.status === 'ACTIVE').length;
+            const upcomingBookings = upcomingRes.data?.totalElements ?? 0;
             const nextBooking      = recentBookings.find((b)  => b.status === 'ACTIVE') ?? null;
 
             // Derive membership status from the DTO fields
