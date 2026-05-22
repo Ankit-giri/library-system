@@ -59,7 +59,7 @@ function DeleteModal({ student, onConfirm, onClose, loading }) {
                 <div className="as-modal__body">
                     <div className="as-delete-icon">⚠️</div>
                     <p className="as-modal__text">
-                        Are you sure you want to delete <strong>{student.name}</strong> ({student.studentId})?
+                        Are you sure you want to delete <strong>{student.fullName}</strong> ({student.studentId})?
                         This will permanently remove all their bookings and payment records.
                     </p>
                 </div>
@@ -90,9 +90,9 @@ function DetailModal({ student, onClose }) {
         <div className="as-modal-backdrop" onClick={onClose}>
             <div className="as-modal as-modal--lg" onClick={e => e.stopPropagation()}>
                 <div className="as-modal__hd">
-                    <div className="as-modal__hd-avatar">{student.name?.[0]?.toUpperCase()}</div>
+                    <div className="as-modal__hd-avatar">{student.fullName?.[0]?.toUpperCase()}</div>
                     <div>
-                        <h5 className="as-modal__title">{student.name}</h5>
+                        <h5 className="as-modal__title">{student.fullName}</h5>
                         <p className="as-modal__subtitle">{student.studentId} · {student.email}</p>
                     </div>
                     <button className="as-modal__close" onClick={onClose}>✕</button>
@@ -227,7 +227,8 @@ export default function AdminStudentsPage() {
         try {
             const params = { page, size: PAGE_SIZE };
             if (debSearch) params.search = debSearch;
-            if (statusFilter !== 'ALL') params.status = statusFilter;
+            if (statusFilter === 'ACTIVE')   params.active = true;
+            if (statusFilter === 'INACTIVE') params.active = false;
             const { data } = await api.get('/api/admin/students', { params });
             setStudents(data.content ?? data ?? []);
             setTotalPages(data.totalPages ?? 1);
@@ -243,11 +244,11 @@ export default function AdminStudentsPage() {
 
     const handleToggleStatus = async (student) => {
         const newActive = !student.active;
-        if (!newActive && !window.confirm(`Deactivate ${student.name}? They won't be able to log in.`)) return;
+        if (!newActive && !window.confirm(`Deactivate ${student.fullName}? They won't be able to log in.`)) return;
         setActLoading(student.id);
         try {
-            await api.put(`/api/admin/students/${student.id}/status`, { active: newActive });
-            toast.success(`${student.name} ${newActive ? 'activated' : 'deactivated'}.`);
+            await api.put(`/api/admin/students/${student.id}/activate`, null, { params: { active: newActive } });
+            toast.success(`${student.fullName} ${newActive ? 'activated' : 'deactivated'}.`);
             fetchStudents();
         } catch {
             toast.error('Failed to update status.');
@@ -356,9 +357,9 @@ export default function AdminStudentsPage() {
                                             <td className="as-cell-num">{page * PAGE_SIZE + idx + 1}</td>
                                             <td>
                                                 <div className="as-student-cell">
-                                                    <div className="as-student-avatar">{s.name?.[0]?.toUpperCase()}</div>
+                                                    <div className="as-student-avatar">{s.fullName?.[0]?.toUpperCase()}</div>
                                                     <div>
-                                                        <div className="as-cell-primary">{s.name}</div>
+                                                        <div className="as-cell-primary">{s.fullName}</div>
                                                         <div className="as-cell-sub">{s.studentId}</div>
                                                     </div>
                                                 </div>
