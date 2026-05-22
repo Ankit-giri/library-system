@@ -54,6 +54,7 @@ public class BookingService {
     public BookingResponse createBooking(BookingRequest request, Authentication authentication) {
         String userEmail = resolveCurrentUserEmail(authentication);
         String studentId = resolveCurrentStudentId(authentication);
+        Long userId = resolveCurrentUserId(authentication);
         SeatEntity seat = seatRepository.findByIdAndDeletedFalse(request.getSeatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found with id " + request.getSeatId()));
 
@@ -62,6 +63,7 @@ public class BookingService {
         validateStudentBookingConflict(userEmail, request.getBookingDate(), request.getTimeSlot());
 
         BookingEntity booking = BookingEntity.builder()
+                .userId(userId)
                 .userEmail(userEmail)
                 .studentId(studentId)
                 .seat(seat)
@@ -311,6 +313,18 @@ public class BookingService {
         if (details instanceof Map<?, ?> map) {
             Object sid = map.get("studentId");
             if (sid instanceof String s) return s;
+        }
+        return null;
+    }
+
+    private Long resolveCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object uid = map.get("userId");
+            if (uid instanceof Number n) return n.longValue();
         }
         return null;
     }

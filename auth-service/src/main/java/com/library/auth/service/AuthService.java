@@ -60,7 +60,7 @@ public class AuthService implements UserDetailsService {
 
         UserEntity saved = userRepository.save(user);
         UserDetails userDetails = buildUserDetails(saved);
-        String token = jwtUtil.generateToken(userDetails, saved.getStudentId());
+        String token = jwtUtil.generateToken(userDetails, saved.getStudentId(), saved.getId());
         return createAuthResponse(saved, token);
     }
 
@@ -76,7 +76,7 @@ public class AuthService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserDetails userDetails = buildUserDetails(user);
-        String token = jwtUtil.generateToken(userDetails, user.getStudentId());
+        String token = jwtUtil.generateToken(userDetails, user.getStudentId(), user.getId());
         return createAuthResponse(user, token);
     }
 
