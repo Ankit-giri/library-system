@@ -21,6 +21,8 @@ import SeatBookingPage from './pages/SeatBookingPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import FeeRenewalPage from './pages/FeeRenewalPage';
 import NotificationsPage from './pages/NotificationsPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 /* Admin pages (inside Layout) */
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -48,6 +50,8 @@ function App() {
                             <Route path="/my-bookings" element={<MyBookingsPage />} />
                             <Route path="/fee-renewal" element={<FeeRenewalPage />} />
                             <Route path="/notifications" element={<NotificationsPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
                         </Route>
 
                         {/* ── Admin routes — wrapped in AdminRoute + AdminLayout (sidebar) ── */}
