@@ -130,6 +130,7 @@
 .ase-legend__dot--booked      { background: var(--color-primary); }
 .ase-legend__dot--maintenance { background: var(--color-warning); }
 .ase-legend__dot--reserved    { background: #8b5cf6; }
+.ase-legend__dot--unavailable { background: #8b5cf6; }
 
 /* ── Error bar ───────────────────────────── */
 .ase-error-bar {
@@ -305,10 +306,11 @@
     border-radius: var(--radius-pill);
     text-transform: uppercase;
 }
-.ase-status-chip--available   { background: #dcfce7; color: #15803d; }
-.ase-status-chip--booked      { background: #dbeafe; color: var(--color-primary); }
-.ase-status-chip--maintenance { background: #fef9c3; color: #92400e; }
-.ase-status-chip--reserved    { background: #ede9fe; color: #6d28d9; }
+.ase-status-chip--available    { background: #dcfce7; color: #15803d; }
+.ase-status-chip--booked       { background: #dbeafe; color: var(--color-primary); }
+.ase-status-chip--maintenance  { background: #fef9c3; color: #92400e; }
+.ase-status-chip--reserved,
+.ase-status-chip--unavailable  { background: #ede9fe; color: #6d28d9; }
 
 .ase-modal-note {
     font-size: 0.8rem;
@@ -349,7 +351,8 @@
 }
 .ase-radio__dot--available   { background: #22c55e; }
 .ase-radio__dot--maintenance { background: var(--color-warning); }
-.ase-radio__dot--reserved    { background: #8b5cf6; }
+.ase-radio__dot--reserved,
+.ase-radio__dot--unavailable { background: #8b5cf6; }
 
 .ase-modal__ft {
     display: flex;

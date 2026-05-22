@@ -217,11 +217,7 @@
     display: flex;
     flex-direction: column;
 }
-@media (min-width: 992px) {
-    .al-content {
-        margin-left: 256px;
-    }
-}
+/* sidebar is position:sticky on desktop (in flex flow), flex:1 handles the offset — no margin-left needed */
 
 /* Topbar (mobile only) */
 .al-topbar {

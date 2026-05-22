@@ -5,18 +5,18 @@ import './AdminSeatsPage.css';
 
 // ISSUE-32 fix: SeatZone enum values are QUIET, GROUP, SILENT, OPEN — no COMPUTERS zone
 const ZONES     = ['ALL', 'QUIET', 'GROUP', 'SILENT', 'OPEN'];
-const STATUSES  = ['AVAILABLE', 'MAINTENANCE', 'RESERVED'];
+const STATUSES  = ['AVAILABLE', 'MAINTENANCE', 'UNAVAILABLE'];
 const AMENITIES = ['Power Outlet', 'Whiteboard', 'Monitor', 'Window View'];
 
 const ZONE_INITIAL = { QUIET: 'Q', GROUP: 'G', SILENT: 'S', OPEN: 'O' };
-const STATUS_LABEL = { AVAILABLE: 'Available', MAINTENANCE: 'Maintenance', RESERVED: 'Reserved', BOOKED: 'Booked' };
+const STATUS_LABEL = { AVAILABLE: 'Available', MAINTENANCE: 'Maintenance', UNAVAILABLE: 'Reserve', OCCUPIED: 'Occupied', BOOKED: 'Booked' };
 
 function SeatCell({ seat, onSelect }) {
     let cls = 'ase-seat';
-    if (seat.status === 'BOOKED')      cls += ' ase-seat--booked';
-    else if (seat.status === 'MAINTENANCE') cls += ' ase-seat--maintenance';
-    else if (seat.status === 'RESERVED')    cls += ' ase-seat--reserved';
-    else                                    cls += ' ase-seat--available';
+    if (seat.status === 'BOOKED' || seat.status === 'OCCUPIED') cls += ' ase-seat--booked';
+    else if (seat.status === 'MAINTENANCE')  cls += ' ase-seat--maintenance';
+    else if (seat.status === 'UNAVAILABLE')  cls += ' ase-seat--reserved';
+    else                                     cls += ' ase-seat--available';
 
     return (
         <button
@@ -36,7 +36,9 @@ function SkeletonSeat() {
 
 /* ── Status change modal ─────────────────── */
 function StatusModal({ seat, onSave, onDelete, onClose, loading }) {
-    const [newStatus, setNewStatus] = useState(seat.status === 'BOOKED' ? 'AVAILABLE' : seat.status);
+    const [newStatus, setNewStatus] = useState(
+        (seat.status === 'BOOKED' || seat.status === 'OCCUPIED') ? 'AVAILABLE' : seat.status
+    );
 
     return (
         <div className="ase-modal-backdrop" onClick={onClose}>
@@ -131,7 +133,14 @@ function AddSeatModal({ onSave, onClose, loading }) {
     const handleSubmit = () => {
         const e = validate();
         if (Object.keys(e).length) { setErrors(e); return; }
-        onSave({ ...form, seatNumber: form.seatNumber.trim().toUpperCase(), floor: Number(form.floor) });
+        onSave({
+            seatNumber: form.seatNumber.trim().toUpperCase(),
+            zone: form.zone,
+            floor: Number(form.floor),
+            status: 'AVAILABLE',
+            hasPowerOutlet: form.amenities.includes('Power Outlet'),
+            hasWindow: form.amenities.includes('Window View'),
+        });
     };
 
     const toggleAmenity = (a) => {
