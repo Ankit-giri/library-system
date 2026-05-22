@@ -244,9 +244,6 @@ library-system/
 ├── notification-service/ In-app notifications + email log (port 8086)
 ├── admin-service/        Placeholder — admin logic lives in owning services (port 8087)
 ├── frontend/             React 18 + Vite SPA
-├── docker/
-│   └── postgres/
-│       └── init.sql      Creates all 6 service databases on first start
 ├── docker-compose.yml
 ├── .env.example          Copy to .env and fill in secrets
 └── LibrarySystem.postman_collection.json
