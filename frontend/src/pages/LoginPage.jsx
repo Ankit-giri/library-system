@@ -5,6 +5,24 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/auth.css';
 import './LoginPage.css';
 
+function ErrorBlock({ msg, type, onForgotPassword, onRegister }) {
+    if (!msg) return null;
+    return (
+        <div className={`auth-alert auth-alert--error`} role="alert">
+            <span className="auth-alert__icon">⚠️</span>
+            <span style={{ flex: 1 }}>{msg}</span>
+            {type === 'not_found' && (
+                <button type="button" className="auth-alert__action-btn"
+                    onClick={onRegister}>Register</button>
+            )}
+            {type === 'bad_credentials' && (
+                <button type="button" className="auth-alert__action-btn"
+                    onClick={onForgotPassword}>Forgot password?</button>
+            )}
+        </div>
+    );
+}
+
 function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -14,6 +32,7 @@ function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState('');
+    const [errorType, setErrorType] = useState(''); // 'not_found' | 'bad_credentials' | ''
     const [fields, setFields] = useState({ identifier: '', password: '' });
     const [errors, setErrors] = useState({});
 
@@ -29,7 +48,7 @@ function LoginPage() {
         const { name, value } = e.target;
         setFields(f => ({ ...f, [name]: value }));
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
-        if (formError) setFormError('');
+        if (formError) { setFormError(''); setErrorType(''); }
     };
 
     const handleSubmit = async (e) => {
@@ -39,16 +58,26 @@ function LoginPage() {
 
         setLoading(true);
         setFormError('');
+        setErrorType('');
         try {
-            // login() uses /api/auth/login for all roles; role is determined by the JWT
             const auth = await login(fields.identifier, fields.password);
             toast.success(auth.role === 'ADMIN' ? 'Admin login successful.' : 'Welcome back!');
             const returnTo = searchParams.get('returnTo');
             const defaultDest = auth.role === 'ADMIN' ? '/admin' : '/dashboard';
             navigate(returnTo ? decodeURIComponent(returnTo) : defaultDest, { replace: true });
         } catch (err) {
+            const status = err?.response?.status;
             const msg = err?.response?.data?.message ?? 'Invalid credentials. Please try again.';
-            setFormError(msg);
+            if (status === 404) {
+                setErrorType('not_found');
+                setFormError('No account found with this email.');
+            } else if (status === 401) {
+                setErrorType('bad_credentials');
+                setFormError('Incorrect password.');
+            } else {
+                setErrorType('');
+                setFormError(msg);
+            }
             toast.error(msg);
         } finally {
             setLoading(false);
@@ -81,12 +110,12 @@ function LoginPage() {
                                 : 'Sign in to your student account.'}
                         </p>
 
-                        {formError && (
-                            <div className="auth-alert auth-alert--error" role="alert">
-                                <span className="auth-alert__icon">⚠️</span>
-                                {formError}
-                            </div>
-                        )}
+                        <ErrorBlock
+                            msg={formError}
+                            type={errorType}
+                            onRegister={() => navigate('/register')}
+                            onForgotPassword={() => navigate('/forgot-password')}
+                        />
 
                         <form onSubmit={handleSubmit} noValidate>
                             <div className="auth-field">

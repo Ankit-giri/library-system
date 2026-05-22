@@ -28,6 +28,11 @@ spring:
           predicates:
             - Path=/api/auth/**
 
+        - id: notification-internal
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/internal/**
+
         - id: student-service
           uri: http://localhost:8082
           predicates:

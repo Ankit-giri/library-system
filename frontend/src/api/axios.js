@@ -16,7 +16,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const url = error.config?.url ?? '';
+        const isAuthEndpoint = url.includes('/api/auth/');
+        if (error.response?.status === 401 && !isAuthEndpoint) {
             localStorage.removeItem('libraryToken');
             localStorage.removeItem('libraryRole');
             localStorage.removeItem('libraryUser');
