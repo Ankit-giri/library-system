@@ -1,18 +1,28 @@
-import { Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 
 function AdminRoute({ children }) {
-  const token = localStorage.getItem('libraryToken');
-  const role = localStorage.getItem('libraryRole');
+    const { isAuthenticated, isAdmin } = useAuth();
+    const { pathname, search } = useLocation();
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
+    useEffect(() => {
+        if (isAuthenticated && !isAdmin) {
+            toast.error('Access Denied: Admin privileges required.', {
+                toastId: 'admin-access-denied',
+            });
+        }
+    }, [isAuthenticated, isAdmin]);
 
-  if (role !== 'ADMIN') {
-    return <Navigate to="/dashboard" replace />;
-  }
+    if (!isAuthenticated) {
+        const returnTo = encodeURIComponent(pathname + search);
+        return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
+    }
 
-  return children;
+    if (!isAdmin) return <Navigate to="/dashboard" replace />;
+
+    return children;
 }
 
 export default AdminRoute;

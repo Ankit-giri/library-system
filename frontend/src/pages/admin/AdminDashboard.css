@@ -1,1 +1,284 @@
-.admin-dashboard { padding: 2rem; }
+/* ──────────────────────────────────────────────
+   AdminDashboard  (ad-)
+────────────────────────────────────────────── */
+.ad-root {
+    animation: ad-enter 0.3s ease both;
+}
+@keyframes ad-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page header ─────────────────────────── */
+.ad-page-hd {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+.ad-page-hd__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 4px;
+    letter-spacing: -0.03em;
+}
+.ad-page-hd__sub {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+.ad-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+}
+.ad-refresh-btn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.ad-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@keyframes ad-rotate { to { transform: rotate(360deg); } }
+.ad-spin { animation: ad-rotate 0.8s linear infinite; }
+
+/* ── Error bar ───────────────────────────── */
+.ad-error-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    background: #fff1f0;
+    border: 1px solid #ffc7c5;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-5);
+    margin-bottom: var(--space-5);
+    font-size: 0.875rem;
+    color: var(--color-danger);
+}
+.ad-error-bar button {
+    background: none;
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+    border-radius: var(--radius-pill);
+    padding: 3px var(--space-3);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.ad-error-bar button:hover { background: var(--color-danger); color: #fff; }
+
+/* ── Stat card ───────────────────────────── */
+.ad-stat-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    height: 100%;
+    transition: var(--transition-base);
+    border: 1px solid var(--color-border);
+}
+.ad-stat-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+
+.ad-stat-card__icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ad-stat-card--blue  .ad-stat-card__icon-wrap { background: #eff6ff; color: var(--color-primary); }
+.ad-stat-card--green .ad-stat-card__icon-wrap { background: #ecfdf5; color: var(--color-success); }
+.ad-stat-card--teal  .ad-stat-card__icon-wrap { background: #f0fdfa; color: #0d9488; }
+.ad-stat-card--purple .ad-stat-card__icon-wrap { background: #f5f3ff; color: #7c3aed; }
+
+.ad-stat-card__body { flex: 1; min-width: 0; }
+.ad-stat-card__label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-1);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ad-stat-card__value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 2px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+.ad-stat-card__sub {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* ── Card (generic) ──────────────────────── */
+.ad-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.ad-card__hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-5) var(--space-5) 0;
+}
+.ad-card__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+.ad-link-btn {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: var(--transition-fast);
+}
+.ad-link-btn:hover { opacity: 0.75; }
+
+/* ── Charts ──────────────────────────────── */
+.ad-chart-wrap {
+    padding: var(--space-5);
+    height: 280px;
+}
+.ad-chart-wrap--doughnut {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Table ───────────────────────────────── */
+.ad-table { font-size: 0.85rem; margin: 0; }
+.ad-table thead th {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-3) var(--space-5);
+    background: none;
+}
+.ad-table td {
+    padding: var(--space-3) var(--space-5);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+.ad-table tbody tr:last-child td { border-bottom: none; }
+.ad-table tbody tr:hover td { background: var(--color-bg); }
+
+.ad-cell-primary { font-size: 0.85rem; font-weight: 500; color: var(--color-text-primary); }
+.ad-cell-sub { font-size: 0.75rem; color: var(--color-text-muted); margin-top: 1px; }
+
+/* ── Status badge ────────────────────────── */
+.ad-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ad-badge--confirmed { background: #ecfdf5; color: #059669; }
+.ad-badge--completed { background: #f3f4f6; color: #6b7280; }
+.ad-badge--cancelled { background: #fff1f0; color: var(--color-danger); }
+.ad-badge--pending   { background: #fffbeb; color: #d97706; }
+
+/* ── Plan chip ───────────────────────────── */
+.ad-plan-chip {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    letter-spacing: 0.02em;
+}
+
+/* ── Quick actions ───────────────────────── */
+.ad-qa {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+    box-shadow: var(--shadow-card);
+}
+.ad-qa__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-4);
+}
+.ad-qa__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+.ad-qa-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-pill);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.ad-qa-btn--blue   { background: var(--color-primary); color: #fff; }
+.ad-qa-btn--blue:hover { background: var(--color-primary-dark); }
+.ad-qa-btn--teal   { background: #0d9488; color: #fff; }
+.ad-qa-btn--teal:hover { background: #0f766e; }
+.ad-qa-btn--purple { background: #7c3aed; color: #fff; }
+.ad-qa-btn--purple:hover { background: #6d28d9; }
+
+/* ── Skeleton ────────────────────────────── */
+.ad-skel {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: ad-shimmer 1.4s infinite;
+}
+@keyframes ad-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.ad-skel--text  { height: 14px; width: 80%; border-radius: 6px; }
+.ad-skel--value { height: 28px; width: 60%; border-radius: 6px; margin: 4px 0; }
+.ad-skel--chart { height: 100%; width: 100%; border-radius: var(--radius-sm); }
