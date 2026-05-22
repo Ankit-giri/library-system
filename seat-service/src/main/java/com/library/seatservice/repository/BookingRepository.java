@@ -7,6 +7,7 @@ import com.library.seatservice.entity.SeatZone;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,6 +52,11 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
                         BookingStatus status);
 
         List<BookingEntity> findByBookingDateBeforeAndStatus(LocalDate bookingDate, BookingStatus status);
+
+        @Query("SELECT b.seat.id FROM BookingEntity b WHERE b.bookingDate = :date AND b.timeSlot = :slot AND b.status = :status")
+        Set<Long> findBookedSeatIds(@Param("date") LocalDate date,
+                        @Param("slot") BookingTimeSlot slot,
+                        @Param("status") BookingStatus status);
 
         @Query("SELECT b FROM BookingEntity b JOIN b.seat s"
                         + " WHERE (:date IS NULL OR b.bookingDate = :date)"

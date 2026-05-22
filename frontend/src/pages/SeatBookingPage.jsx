@@ -45,15 +45,17 @@ function SeatCell({ seat, selectedId, onSelect }) {
     const isSelected  = seat.id === selectedId;
 
     const variant =
-        isSelected  ? 'selected'    :
-        isAvailable ? 'available'   :
-        seat.status === 'BOOKED' ? 'booked' : 'maintenance';
+        isSelected                                            ? 'selected'    :
+        isAvailable                                           ? 'available'   :
+        seat.status === 'OCCUPIED' || seat.status === 'BOOKED' ? 'booked'   :
+                                                                 'maintenance';
 
     const zoneInit = ZONE_INITIAL[seat.zone] ?? seat.zone?.[0] ?? '';
 
     const tooltip =
-        seat.status === 'BOOKED'       ? 'Already booked'    :
-        seat.status === 'MAINTENANCE'  ? 'Under maintenance' :
+        seat.status === 'OCCUPIED' || seat.status === 'BOOKED' ? 'Already booked for this slot' :
+        seat.status === 'MAINTENANCE'                          ? 'Under maintenance'             :
+        seat.status === 'UNAVAILABLE'                          ? 'Unavailable'                  :
         `${seat.seatNumber} · ${seat.zone}`;
 
     return (

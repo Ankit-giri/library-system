@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -50,8 +51,22 @@ public class SeatService {
         if (date == null || slot == null) {
             throw new IllegalArgumentException("Date and slot are required to find available seats");
         }
-        return seatRepository.findAvailableSeats(zone, date, slot, BookingStatus.ACTIVE).stream()
-                .map(seat -> toDto(seat, false))
+        Set<Long> bookedIds = bookingRepository.findBookedSeatIds(date, slot, BookingStatus.ACTIVE);
+        return seatRepository.findAllActiveWithFilters(zone, null, null).stream()
+                .map(seat -> {
+                    SeatStatus effectiveStatus = (seat.getStatus() == SeatStatus.AVAILABLE && bookedIds.contains(seat.getId()))
+                            ? SeatStatus.OCCUPIED
+                            : seat.getStatus();
+                    return SeatDTO.builder()
+                            .id(seat.getId())
+                            .seatNumber(seat.getSeatNumber())
+                            .zone(seat.getZone())
+                            .floor(seat.getFloor())
+                            .status(effectiveStatus)
+                            .hasPowerOutlet(seat.getHasPowerOutlet())
+                            .hasWindow(seat.getHasWindow())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
