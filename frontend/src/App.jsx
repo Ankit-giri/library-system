@@ -1,115 +1,70 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
+
+/* Layout + route guards */
+import Layout from './components/Layout';
+import AdminLayout from './components/AdminLayout';
+import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
+
+/* Public pages (no Layout) */
+import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+
+/* Student pages (inside Layout) */
 import StudentDashboard from './pages/StudentDashboard';
 import SeatBookingPage from './pages/SeatBookingPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import FeeRenewalPage from './pages/FeeRenewalPage';
 import NotificationsPage from './pages/NotificationsPage';
+
+/* Admin pages (inside Layout) */
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminStudentsPage from './pages/admin/AdminStudentsPage';
 import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import AdminSeatsPage from './pages/admin/AdminSeatsPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
-import Cursor from './components/Cursor';
 
 function App() {
-  return (
-    <BrowserRouter>
-      <ToastContainer position="top-right" autoClose={3000} />
-      <Cursor />
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <StudentDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/seat-booking"
-          element={
-            <ProtectedRoute>
-              <SeatBookingPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-bookings"
-          element={
-            <ProtectedRoute>
-              <MyBookingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fee-renewal"
-          element={
-            <ProtectedRoute>
-              <FeeRenewalPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            <ProtectedRoute>
-              <NotificationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/students"
-          element={
-            <AdminRoute>
-              <AdminStudentsPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/bookings"
-          element={
-            <AdminRoute>
-              <AdminBookingsPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/seats"
-          element={
-            <AdminRoute>
-              <AdminSeatsPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/reports"
-          element={
-            <AdminRoute>
-              <AdminReportsPage />
-            </AdminRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
-    </BrowserRouter>
-  );
+    return (
+        <AuthProvider>
+            <NotificationProvider>
+                <BrowserRouter>
+                    <ToastContainer position="top-right" autoClose={3000} />
+                    <Routes>
+                        {/* ── Public routes (no Navbar/Footer) ── */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+
+                        {/* ── Student routes — wrapped in PrivateRoute + Layout ── */}
+                        <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                            <Route path="/dashboard" element={<StudentDashboard />} />
+                            <Route path="/seat-booking" element={<SeatBookingPage />} />
+                            <Route path="/my-bookings" element={<MyBookingsPage />} />
+                            <Route path="/fee-renewal" element={<FeeRenewalPage />} />
+                            <Route path="/notifications" element={<NotificationsPage />} />
+                        </Route>
+
+                        {/* ── Admin routes — wrapped in AdminRoute + AdminLayout (sidebar) ── */}
+                        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                            <Route path="/admin" element={<AdminDashboard />} />
+                            <Route path="/admin/students" element={<AdminStudentsPage />} />
+                            <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+                            <Route path="/admin/seats" element={<AdminSeatsPage />} />
+                            <Route path="/admin/reports" element={<AdminReportsPage />} />
+                        </Route>
+
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                    </Routes>
+                </BrowserRouter>
+            </NotificationProvider>
+        </AuthProvider>
+    );
 }
 
 export default App;

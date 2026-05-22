@@ -1,0 +1,43 @@
+.lib-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+}
+
+.lib-main {
+    flex: 1;
+    padding: var(--space-8) var(--space-4);
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .lib-main { padding: var(--space-10) var(--space-8); }
+}
+
+@media (min-width: 1200px) {
+    .lib-main { padding: var(--space-10) var(--space-12); }
+}
+
+/* ── Footer ─────────────────────────────────────── */
+.lib-footer {
+    padding: var(--space-5) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    text-align: center;
+}
+
+.lib-footer__text {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.lib-footer__sep {
+    display: inline-block;
+    margin: 0 var(--space-2);
+    color: var(--color-border);
+}

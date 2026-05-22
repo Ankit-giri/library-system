@@ -1,0 +1,35 @@
+.home-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+}
+
+.home-hero {
+    max-width: 600px;
+    width: 100%;
+    padding: var(--space-10);
+    text-align: center;
+}
+
+.home-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-4);
+}
+
+.home-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-8);
+    line-height: 1.6;
+}
+
+.home-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}

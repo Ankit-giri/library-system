@@ -1,48 +1,61 @@
 :root {
-  /* Brand Colors */
-  --color-primary: #0071e3;
-  --color-primary-dark: #0055b3;
-  --color-primary-light: #eff6ff;
-  --color-success: #00c896;
-  --color-danger: #ff3b30;
-  --color-warning: #ff9500;
+    /* Brand Colors */
+    --color-primary: #0071e3;
+    --color-primary-dark: #0055b3;
+    --color-primary-light: #eff6ff;
+    --color-success: #00c896;
+    --color-danger: #ff3b30;
+    --color-warning: #ff9500;
 
-  /* Backgrounds */
-  --color-bg: #f5f5f7;
-  --color-surface: #ffffff;
-  --color-glass: rgba(255, 255, 255, 0.72);
+    /* Backgrounds */
+    --color-bg: #f5f5f7;
+    --color-surface: #ffffff;
+    --color-glass: rgba(255, 255, 255, 0.72);
 
-  /* Text */
-  --color-text-primary: #1d1d1f;
-  --color-text-secondary: #6e6e73;
-  --color-text-muted: #aeaeb2;
+    /* Text */
+    --color-text-primary: #1d1d1f;
+    --color-text-secondary: #6e6e73;
+    --color-text-muted: #aeaeb2;
 
-  /* Borders */
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-glass: rgba(255, 255, 255, 0.6);
+    /* Borders */
+    --color-border: rgba(0, 0, 0, 0.08);
+    --color-border-glass: rgba(255, 255, 255, 0.6);
 
-  /* Shadows */
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.14);
-  --shadow-glow: 0 8px 30px rgba(0, 113, 227, 0.35);
+    /* Shadows */
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.14);
+    --shadow-glow: 0 8px 30px rgba(0, 113, 227, 0.35);
 
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-pill: 100px;
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-pill: 100px;
 
-  /* Typography */
-  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Instrument Serif', Georgia, serif;
+    /* Typography */
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Instrument Serif', Georgia, serif;
 
-  /* Transitions */
-  --transition-fast: all 0.15s ease;
-  --transition-base: all 0.25s ease;
-  --transition-slow: all 0.4s ease;
+    /* Transitions */
+    --transition-fast: all 0.15s ease;
+    --transition-base: all 0.25s ease;
+    --transition-slow: all 0.4s ease;
 
-  /* Glassmorphism */
-  --glass-blur: blur(20px) saturate(180%);
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+    /* Glassmorphism */
+    --glass-blur: blur(20px) saturate(180%);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+
+    /* Spacing (4px base scale) */
+    --space-1: 0.25rem;   /* 4px */
+    --space-2: 0.5rem;    /* 8px */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-8: 2rem;      /* 32px */
+    --space-10: 2.5rem;   /* 40px */
+    --space-12: 3rem;     /* 48px */
+    --space-16: 4rem;     /* 64px */
+    --space-20: 5rem;     /* 80px */
 }
