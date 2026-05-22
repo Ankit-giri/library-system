@@ -88,14 +88,14 @@ class AuthServiceTest {
     void testRegister_Success() {
         // Arrange — no duplicates exist
         when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
-        when(userRepository.existsByStudentId(STUDENT_ID)).thenReturn(false);
+        when(userRepository.count()).thenReturn(0L);
+        when(userRepository.existsByStudentId(anyString())).thenReturn(false);
         when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(HASHED_PW);
         when(userRepository.save(any(UserEntity.class))).thenReturn(savedUser);
         when(jwtUtil.generateToken(any(UserDetails.class))).thenReturn(MOCK_TOKEN);
         when(jwtUtil.extractExpiration(MOCK_TOKEN)).thenReturn(futureExpiry);
 
         RegisterRequest request = new RegisterRequest();
-        request.setStudentId(STUDENT_ID);
         request.setFullName(FULL_NAME);
         request.setEmail(EMAIL);
         request.setPassword(RAW_PASSWORD);
@@ -116,35 +116,12 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("register — duplicate Student ID throws IllegalArgumentException")
-    void testRegister_DuplicateStudentId_ThrowsException() {
-        // Arrange — email is free, but studentId is already taken
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userRepository.existsByStudentId(STUDENT_ID)).thenReturn(true);
-
-        RegisterRequest request = new RegisterRequest();
-        request.setStudentId(STUDENT_ID);
-        request.setFullName(FULL_NAME);
-        request.setEmail(EMAIL);
-        request.setPassword(RAW_PASSWORD);
-
-        // Act & Assert
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> authService.register(request));
-
-        assertThat(ex.getMessage()).contains("Student ID");
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("register — duplicate email throws IllegalArgumentException")
     void testRegister_DuplicateEmail_ThrowsException() {
         // Arrange — email already registered
         when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
 
         RegisterRequest request = new RegisterRequest();
-        request.setStudentId(STUDENT_ID);
         request.setFullName(FULL_NAME);
         request.setEmail(EMAIL);
         request.setPassword(RAW_PASSWORD);

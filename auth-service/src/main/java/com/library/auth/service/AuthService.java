@@ -47,8 +47,10 @@ public class AuthService implements UserDetailsService {
     public AuthResponse register(RegisterRequest request) {
         validateRegistration(request);
 
+        String studentId = generateStudentId();
+
         UserEntity user = UserEntity.builder()
-                .studentId(request.getStudentId())
+                .studentId(studentId)
                 .fullName(request.getFullName())
                 .email(request.getEmail().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -128,12 +130,18 @@ public class AuthService implements UserDetailsService {
                 .build();
     }
 
+    private String generateStudentId() {
+        String id;
+        do {
+            long seq = userRepository.count() + 1 + (long)(Math.random() * 100);
+            id = String.format("STU%07d", seq);
+        } while (userRepository.existsByStudentId(id));
+        return id;
+    }
+
     private void validateRegistration(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail().toLowerCase())) {
             throw new IllegalArgumentException("Email is already registered");
-        }
-        if (userRepository.existsByStudentId(request.getStudentId())) {
-            throw new IllegalArgumentException("Student ID is already registered");
         }
     }
 }

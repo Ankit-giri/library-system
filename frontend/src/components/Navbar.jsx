@@ -87,7 +87,7 @@ function Navbar() {
                     {/* Center links */}
                     <ul className="navbar-nav mx-auto mb-2 mb-lg-0 lib-nav-links">
                         <li className="nav-item">
-                            <NavLink to="/" end className={navCls}>Home</NavLink>
+                            <NavLink to="/dashboard" end className={navCls}>Home</NavLink>
                         </li>
                         <li className="nav-item">
                             <NavLink to="/seat-booking" className={navCls}>Seat Booking</NavLink>

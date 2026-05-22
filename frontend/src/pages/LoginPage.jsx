@@ -90,14 +90,14 @@ function LoginPage() {
                         <form onSubmit={handleSubmit} noValidate>
                             <div className="auth-field">
                                 <label className="auth-label" htmlFor="identifier">
-                                    {isAdminMode ? 'Admin Email' : 'Student ID / Email'}
+                                    Email
                                 </label>
                                 <input
                                     id="identifier"
                                     name="identifier"
-                                    type="text"
+                                    type="email"
                                     className={`auth-input${errors.identifier ? ' auth-input--error' : ''}`}
-                                    placeholder={isAdminMode ? 'admin@library.com' : 'e.g. STU2024001'}
+                                    placeholder={isAdminMode ? 'admin@library.com' : 'you@college.edu'}
                                     value={fields.identifier}
                                     onChange={handleChange}
                                     autoComplete="username"
