@@ -307,12 +307,10 @@ public class BookingService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AccessDeniedException("Authentication required");
         }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
-        }
-        if (principal instanceof String name) {
-            return name;
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object sid = map.get("studentId");
+            if (sid instanceof String s) return s;
         }
         return null;
     }

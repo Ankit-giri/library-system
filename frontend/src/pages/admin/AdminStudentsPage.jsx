@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 import './AdminStudentsPage.css';
 
 const PAGE_SIZE = 10;
@@ -197,6 +198,7 @@ function DetailModal({ student, onClose }) {
 
 /* ── Main page ───────────────────────────── */
 export default function AdminStudentsPage() {
+    const { currentUser } = useAuth();
     const [students, setStudents]       = useState([]);
     const [loading, setLoading]         = useState(true);
     const [error, setError]             = useState('');
@@ -347,7 +349,9 @@ export default function AdminStudentsPage() {
                                             </td>
                                         </tr>
                                     )
-                                    : students.map((s, idx) => (
+                                    : students.map((s, idx) => {
+                                        const isSelf = s.email === currentUser?.email;
+                                        return (
                                         <tr key={s.id}>
                                             <td className="as-cell-num">{page * PAGE_SIZE + idx + 1}</td>
                                             <td>
@@ -372,26 +376,31 @@ export default function AdminStudentsPage() {
                                                     >
                                                         Details
                                                     </button>
-                                                    <button
-                                                        className={`as-action-btn ${s.active ? 'as-action-btn--deactivate' : 'as-action-btn--activate'}`}
-                                                        onClick={() => handleToggleStatus(s)}
-                                                        disabled={actionLoading === s.id}
-                                                        title={s.active ? 'Deactivate' : 'Activate'}
-                                                    >
-                                                        {actionLoading === s.id ? '…' : s.active ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                    <button
-                                                        className="as-action-btn as-action-btn--delete"
-                                                        onClick={() => setDeleteTarget(s)}
-                                                        disabled={actionLoading === s.id}
-                                                        title="Delete"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    {!isSelf && (
+                                                        <button
+                                                            className={`as-action-btn ${s.active ? 'as-action-btn--deactivate' : 'as-action-btn--activate'}`}
+                                                            onClick={() => handleToggleStatus(s)}
+                                                            disabled={actionLoading === s.id}
+                                                            title={s.active ? 'Deactivate' : 'Activate'}
+                                                        >
+                                                            {actionLoading === s.id ? '…' : s.active ? 'Deactivate' : 'Activate'}
+                                                        </button>
+                                                    )}
+                                                    {!isSelf && (
+                                                        <button
+                                                            className="as-action-btn as-action-btn--delete"
+                                                            onClick={() => setDeleteTarget(s)}
+                                                            disabled={actionLoading === s.id}
+                                                            title="Delete"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                             }
                         </tbody>
                     </table>

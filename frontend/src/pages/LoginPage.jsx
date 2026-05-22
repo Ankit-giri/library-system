@@ -41,10 +41,11 @@ function LoginPage() {
         setFormError('');
         try {
             // login() uses /api/auth/login for all roles; role is determined by the JWT
-            await login(fields.identifier, fields.password);
-            toast.success(isAdminMode ? 'Admin login successful.' : 'Welcome back!');
+            const auth = await login(fields.identifier, fields.password);
+            toast.success(auth.role === 'ADMIN' ? 'Admin login successful.' : 'Welcome back!');
             const returnTo = searchParams.get('returnTo');
-            navigate(returnTo ? decodeURIComponent(returnTo) : '/dashboard', { replace: true });
+            const defaultDest = auth.role === 'ADMIN' ? '/admin' : '/dashboard';
+            navigate(returnTo ? decodeURIComponent(returnTo) : defaultDest, { replace: true });
         } catch (err) {
             const msg = err?.response?.data?.message ?? 'Invalid credentials. Please try again.';
             setFormError(msg);

@@ -30,6 +30,7 @@ import AdminStudentsPage from './pages/admin/AdminStudentsPage';
 import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import AdminSeatsPage from './pages/admin/AdminSeatsPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import AdminEmailPage from './pages/admin/AdminEmailPage';
 
 function App() {
     return (
@@ -61,6 +62,7 @@ function App() {
                             <Route path="/admin/bookings" element={<AdminBookingsPage />} />
                             <Route path="/admin/seats" element={<AdminSeatsPage />} />
                             <Route path="/admin/reports" element={<AdminReportsPage />} />
+                            <Route path="/admin/email" element={<AdminEmailPage />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/login" replace />} />
