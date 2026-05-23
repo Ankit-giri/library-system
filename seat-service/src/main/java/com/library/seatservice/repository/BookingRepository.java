@@ -49,4 +49,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long>, o
                         @Param("slot") BookingTimeSlot slot,
                         @Param("status") BookingStatus status);
 
+        @Query("SELECT DISTINCT b.seat.id FROM BookingEntity b WHERE b.bookingDate = :date AND b.status = :status")
+        Set<Long> findDistinctBookedSeatIdsByDate(@Param("date") LocalDate date,
+                        @Param("status") BookingStatus status);
+
 }

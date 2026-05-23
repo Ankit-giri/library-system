@@ -118,12 +118,27 @@ public class SeatService {
     }
 
     public List<SeatOccupancyDTO> getOccupancyHeatmap() {
-        return getSeatOccupancyStats().entrySet().stream()
-                .map(entry -> SeatOccupancyDTO.builder()
-                        .zone(entry.getKey())
-                        .occupied(entry.getValue().getOrDefault(SeatStatus.OCCUPIED.name(), 0L))
-                        .available(entry.getValue().getOrDefault(SeatStatus.AVAILABLE.name(), 0L))
-                        .maintenance(entry.getValue().getOrDefault(SeatStatus.MAINTENANCE.name(), 0L))
+        LocalDate today = LocalDate.now();
+        Set<Long> bookedTodayIds = bookingRepository.findDistinctBookedSeatIdsByDate(today, BookingStatus.ACTIVE);
+
+        Map<String, long[]> counts = new LinkedHashMap<>(); // [available, occupied, maintenance]
+        seatRepository.findAllActiveWithFilters(null, null, null).forEach(seat -> {
+            long[] c = counts.computeIfAbsent(seat.getZone().name(), z -> new long[3]);
+            if (seat.getStatus() == SeatStatus.MAINTENANCE || seat.getStatus() == SeatStatus.UNAVAILABLE) {
+                c[2]++;
+            } else if (bookedTodayIds.contains(seat.getId())) {
+                c[1]++;
+            } else {
+                c[0]++;
+            }
+        });
+
+        return counts.entrySet().stream()
+                .map(e -> SeatOccupancyDTO.builder()
+                        .zone(e.getKey())
+                        .available(e.getValue()[0])
+                        .occupied(e.getValue()[1])
+                        .maintenance(e.getValue()[2])
                         .build())
                 .toList();
     }
