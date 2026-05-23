@@ -13,6 +13,7 @@ import com.library.seatservice.entity.SeatZone;
 import com.library.seatservice.external.PaymentClient;
 import com.library.seatservice.exception.ResourceNotFoundException;
 import com.library.seatservice.repository.BookingRepository;
+import com.library.seatservice.repository.BookingSpecifications;
 import com.library.seatservice.repository.SeatRepository;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -134,7 +135,7 @@ public class BookingService {
     }
 
     public BookingReportResponse getBookingReport(LocalDate from, LocalDate to) {
-        List<BookingEntity> bookings = bookingRepository.findByFiltersForReport(from, to, null, null, null);
+        List<BookingEntity> bookings = bookingRepository.findByDateRange(from, to);
         long total = bookings.size();
         long active = bookings.stream().filter(b -> b.getStatus() == BookingStatus.ACTIVE).count();
         long cancelled = bookings.stream().filter(b -> b.getStatus() == BookingStatus.CANCELLED).count();
@@ -179,12 +180,10 @@ public class BookingService {
     }
 
     public String exportBookingsCsv(String month) {
-        List<BookingEntity> bookings = bookingRepository.findByFiltersForReport(null, null, null, null, null);
-        if (month != null) {
-            bookings = bookings.stream()
-                    .filter(booking -> booking.getBookingDate().toString().startsWith(month))
-                    .toList();
-        }
+        List<BookingEntity> all = bookingRepository.findAll();
+        List<BookingEntity> bookings = month != null
+                ? all.stream().filter(b -> b.getBookingDate().toString().startsWith(month)).toList()
+                : all;
         StringBuilder csv = new StringBuilder(
                 "BookingId,StudentId,UserEmail,SeatNumber,Zone,Date,Slot,Status,CancelledAt,AdminCancelReason\n");
         bookings.forEach(booking -> csv.append(String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
@@ -206,7 +205,8 @@ public class BookingService {
             SeatZone zone,
             String studentId,
             Pageable pageable) {
-        return bookingRepository.findByFilters(date, status, zone, studentId, pageable)
+        return bookingRepository.findAll(
+                BookingSpecifications.forAdminList(date, status, zone, studentId), pageable)
                 .map(this::toResponse);
     }
 

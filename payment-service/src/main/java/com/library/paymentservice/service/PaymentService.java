@@ -193,14 +193,21 @@ public class PaymentService {
                 .build();
     }
 
-    public RevenueReportDTO getRevenueReport(String month) {
-        Map<String, BigDecimal> byPlan = membershipFeeRepository.findAll().stream()
-                .filter(entity -> month == null || getMonthKey(entity).equals(month))
+    public RevenueReportDTO getRevenueReport(String month, LocalDate from, LocalDate to) {
+        List<MembershipFeeEntity> filtered = membershipFeeRepository.findAll().stream()
+                .filter(entity -> {
+                    LocalDate paidDate = entity.getPaidAt().toLocalDate();
+                    if (from != null && to != null) {
+                        return !paidDate.isBefore(from) && !paidDate.isAfter(to);
+                    }
+                    return month == null || getMonthKey(entity).equals(month);
+                })
+                .toList();
+        Map<String, BigDecimal> byPlan = filtered.stream()
                 .collect(Collectors.groupingBy(MembershipFeeEntity::getPlan,
                         Collectors.mapping(MembershipFeeEntity::getAmount,
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
-        Map<String, BigDecimal> dailyBreakdown = membershipFeeRepository.findAll().stream()
-                .filter(entity -> month == null || getMonthKey(entity).equals(month))
+        Map<String, BigDecimal> dailyBreakdown = filtered.stream()
                 .collect(Collectors.groupingBy(entity -> entity.getPaidAt().toLocalDate().toString(),
                         Collectors.mapping(MembershipFeeEntity::getAmount,
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
@@ -210,6 +217,7 @@ public class PaymentService {
         return RevenueReportDTO.builder()
                 .month(month)
                 .totalRevenue(totalRevenue)
+                .totalTransactions(filtered.size())
                 .revenueByPlan(byPlan)
                 .dailyBreakdown(dailyBreakdown)
                 .build();
