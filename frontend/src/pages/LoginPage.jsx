@@ -71,6 +71,9 @@ function LoginPage() {
             if (status === 404) {
                 setErrorType('not_found');
                 setFormError('No account found with this email.');
+            } else if (status === 403) {
+                setErrorType('deactivated');
+                setFormError(msg);
             } else if (status === 401) {
                 setErrorType('bad_credentials');
                 setFormError('Incorrect password.');

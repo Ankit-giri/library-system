@@ -87,6 +87,11 @@ public class AuthService implements UserDetailsService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("No account found with this email. Please register first."));
 
+        if (!user.getIsActive()) {
+            throw new org.springframework.security.authentication.DisabledException(
+                    "Your account has been deactivated. Please contact the library admin.");
+        }
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, request.getPassword()));
