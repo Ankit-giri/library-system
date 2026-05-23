@@ -1,5 +1,6 @@
 package com.library.paymentservice.service;
 
+import com.library.paymentservice.dto.MembershipPlanDTO;
 import com.library.paymentservice.dto.MembershipStatusDTO;
 import com.library.paymentservice.dto.PaymentConfirmationRequest;
 import com.library.paymentservice.dto.PaymentDTO;
@@ -10,8 +11,10 @@ import com.library.paymentservice.dto.PaymentsResponseDTO;
 import com.library.paymentservice.dto.PendingRenewalsDTO;
 import com.library.paymentservice.dto.RevenueReportDTO;
 import com.library.paymentservice.entity.MembershipFeeEntity;
+import com.library.paymentservice.entity.MembershipPlanEntity;
 import com.library.paymentservice.entity.PaymentPlan;
 import com.library.paymentservice.repository.MembershipFeeRepository;
+import com.library.paymentservice.repository.MembershipPlanRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -31,36 +34,41 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final MembershipFeeRepository membershipFeeRepository;
+    private final MembershipPlanRepository planRepository;
     private final PaymentNotificationService notificationService;
     private final Map<String, PaymentSession> sessions = new ConcurrentHashMap<>();
     private final Random random = new Random();
 
     public PaymentService(MembershipFeeRepository membershipFeeRepository,
+            MembershipPlanRepository planRepository,
             PaymentNotificationService notificationService) {
         this.membershipFeeRepository = membershipFeeRepository;
+        this.planRepository = planRepository;
         this.notificationService = notificationService;
     }
 
-    public List<PaymentDTO> getPlans() {
-        return List.of(PaymentPlan.values()).stream()
-                .map(PaymentPlan::toDto)
+    public List<MembershipPlanDTO> getPlans() {
+        return planRepository.findByActiveTrueOrderByPriceAsc().stream()
+                .map(this::toPlanDTO)
                 .collect(Collectors.toList());
     }
 
     public PaymentSessionDTO initiatePayment(String planName, String studentId) {
-        PaymentPlan plan = parsePlan(planName);
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(planName)
+                .filter(MembershipPlanEntity::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid payment plan: " + planName));
         String sessionId = generateSessionId();
         PaymentSession session = new PaymentSession();
         session.setSessionId(sessionId);
-        session.setPlan(plan.name());
+        session.setPlan(plan.getName());
         session.setStudentId(studentId);
         session.setExpiresAt(System.currentTimeMillis() + 300_000);
         sessions.put(sessionId, session);
 
         return PaymentSessionDTO.builder()
                 .sessionId(sessionId)
-                .amount(plan.getPrice())
-                .plan(plan.name())
+                .amount(plan.getPrice().intValue())
+                .plan(plan.getName())
                 .expiresIn(300)
                 .build();
     }
@@ -77,7 +85,8 @@ public class PaymentService {
             throw new IllegalStateException("Payment failed during simulation");
         }
 
-        PaymentPlan plan = parsePlan(session.plan);
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(session.plan)
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + session.plan));
         MembershipStatusDTO currentStatus = getMembershipStatus(session.studentId);
         LocalDate baseDate = currentStatus.isActive() && currentStatus.getExpiryDate() != null
                 ? currentStatus.getExpiryDate()
@@ -87,8 +96,8 @@ public class PaymentService {
 
         MembershipFeeEntity fee = MembershipFeeEntity.builder()
                 .studentId(session.studentId)
-                .plan(plan.name())
-                .amount(BigDecimal.valueOf(plan.getPrice()))
+                .plan(plan.getName())
+                .amount(plan.getPrice())
                 .transactionId(txnId)
                 .cardLastFour(request.getCardLastFour())
                 .expiryDate(expiry)
@@ -254,16 +263,24 @@ public class PaymentService {
         return String.format("TXN-%d-%06d", System.currentTimeMillis(), random.nextInt(1_000_000));
     }
 
-    public LocalDate calculateExpiryDate(PaymentPlan plan) {
-        return LocalDate.now().plusDays(plan.getDurationDays());
-    }
-
-    private PaymentPlan parsePlan(String planName) {
-        try {
-            return PaymentPlan.valueOf(planName.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid payment plan: " + planName);
-        }
+    private MembershipPlanDTO toPlanDTO(MembershipPlanEntity e) {
+        List<String> features = (e.getFeaturesCsv() == null || e.getFeaturesCsv().isBlank())
+                ? List.of()
+                : java.util.Arrays.stream(e.getFeaturesCsv().split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+        return MembershipPlanDTO.builder()
+                .id(e.getId())
+                .name(e.getName())
+                .displayName(e.getDisplayName())
+                .price(e.getPrice())
+                .durationDays(e.getDurationDays())
+                .description(e.getDescription())
+                .features(features)
+                .badgeText(e.getBadgeText())
+                .featured(e.isFeatured())
+                .active(e.isActive())
+                .build();
     }
 
     private static class PaymentSession {

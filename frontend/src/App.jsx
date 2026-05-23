@@ -33,6 +33,7 @@ import AdminBookingsPage from './pages/admin/AdminBookingsPage';
 import AdminSeatsPage from './pages/admin/AdminSeatsPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
 import AdminEmailPage from './pages/admin/AdminEmailPage';
+import AdminPlansPage from './pages/admin/AdminPlansPage';
 
 function App() {
     return (
@@ -67,6 +68,7 @@ function App() {
                             <Route path="/admin/seats" element={<AdminSeatsPage />} />
                             <Route path="/admin/reports" element={<AdminReportsPage />} />
                             <Route path="/admin/email" element={<AdminEmailPage />} />
+                            <Route path="/admin/plans" element={<AdminPlansPage />} />
                         </Route>
 
                         <Route path="*" element={<Navigate to="/login" replace />} />

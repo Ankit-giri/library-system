@@ -1,8 +1,8 @@
 package com.library.paymentservice.controller;
 
+import com.library.paymentservice.dto.MembershipPlanDTO;
 import com.library.paymentservice.dto.MembershipStatusDTO;
 import com.library.paymentservice.dto.PaymentConfirmationRequest;
-import com.library.paymentservice.dto.PaymentDTO;
 import com.library.paymentservice.dto.PaymentHistoryDTO;
 import com.library.paymentservice.dto.PaymentSessionDTO;
 import com.library.paymentservice.dto.PaymentStatsDTO;
@@ -34,7 +34,7 @@ public class PaymentController {
     }
 
     @GetMapping("/plans")
-    public ResponseEntity<List<PaymentDTO>> getPlans() {
+    public ResponseEntity<List<MembershipPlanDTO>> getPlans() {
         return ResponseEntity.ok(paymentService.getPlans());
     }
 

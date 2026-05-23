@@ -7,51 +7,28 @@ import PageHeader from '../components/PageHeader';
 import { formatDate } from '../utils/formatDate';
 import './FeeRenewalPage.css';
 
-/* ── Plan definitions ────────────────────────── */
-// ISSUE-19 fix: SEMESTER and ANNUAL don't exist in backend PaymentPlan enum.
-// Actual plans: WEEKLY(79/7d), MONTHLY(199/30d), QUARTERLY(549/90d), YEARLY(1999/365d)
-const PLANS = [
-    {
-        id: 'WEEKLY',
-        title: 'Weekly',
-        price: 79,
-        priceLabel: '₹79',
-        period: '/week',
-        days: 7,
-        features: ['7 days full access', 'Seat booking', 'Digital resources'],
-    },
-    {
-        id: 'MONTHLY',
-        title: 'Monthly',
-        price: 199,
-        priceLabel: '₹199',
-        period: '/month',
-        days: 30,
-        features: ['30 days full access', 'Seat booking', 'Digital resources'],
-    },
-    {
-        id: 'QUARTERLY',
-        title: 'Quarterly',
-        price: 549,
-        priceLabel: '₹549',
-        period: '/3 months',
-        days: 90,
-        savings: '₹48',
-        featured: true,
-        features: ['90 days full access', 'Seat booking', 'Digital resources', 'Priority support'],
-    },
-    {
-        id: 'YEARLY',
-        title: 'Yearly',
-        price: 1999,
-        priceLabel: '₹1,999',
-        period: '/year',
-        days: 365,
-        features: ['365 days full access', 'Seat booking', 'Digital resources', 'Priority support', 'Exclusive study rooms'],
-    },
-];
+/* ── Plan helpers ────────────────────────────── */
+function derivePeriod(days) {
+    if (days === 7)   return '/week';
+    if (days === 30)  return '/month';
+    if (days === 90)  return '/3 months';
+    if (days === 365) return '/year';
+    return `/${days} days`;
+}
 
-const PLAN_LABELS = { WEEKLY: 'Weekly', MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', YEARLY: 'Yearly' };
+function mapApiPlan(p) {
+    return {
+        id:         p.name,
+        title:      p.displayName,
+        price:      Number(p.price),
+        priceLabel: `₹${Number(p.price).toLocaleString('en-IN')}`,
+        period:     derivePeriod(p.durationDays),
+        days:       p.durationDays,
+        features:   p.features ?? [],
+        savings:    p.badgeText ?? null,
+        featured:   p.featured,
+    };
+}
 
 const CONFETTI_COLORS = ['#0071e3', '#00c896', '#ff9500', '#ff3b30', '#af52de', '#ffd60a', '#34aadc', '#ff6b6b'];
 
@@ -370,7 +347,20 @@ function FeeRenewalPage() {
     const [membership, setMembership]   = useState(null);
     const [history, setHistory]         = useState([]);
     const [loading, setLoading]         = useState(true);
+    const [plans, setPlans]             = useState([]);
+    const [plansLoading, setPlansLoading] = useState(true);
     const [selectedPlan, setSelected]   = useState(null);
+
+    useEffect(() => {
+        api.get('/api/payments/plans')
+            .then(({ data }) => setPlans(data.map(mapApiPlan)))
+            .catch(() => toast.error('Failed to load plans'))
+            .finally(() => setPlansLoading(false));
+    }, []);
+
+    const planLabel = useCallback((name) =>
+        plans.find(p => p.id === name)?.title ?? name ?? '—',
+    [plans]);
 
     const fetchStatus = useCallback(async () => {
         setLoading(true);
@@ -378,18 +368,16 @@ function FeeRenewalPage() {
             const studentId = currentUser?.studentId;
             if (!studentId) { setLoading(false); return; }
 
-            // ISSUE-20 fix: endpoint is /api/payments/my-membership with X-Student-Id header
             const [membershipRes, historyRes] = await Promise.all([
                 api.get('/api/payments/my-membership', { headers: { 'X-Student-Id': studentId } }),
                 api.get('/api/payments/history',       { headers: { 'X-Student-Id': studentId } }),
             ]);
 
             const m = membershipRes.data;
-            // MembershipStatusDTO: { active, expiryDate, plan }
             const daysRemaining = m.expiryDate
                 ? Math.max(0, Math.ceil((new Date(m.expiryDate) - new Date()) / 86_400_000))
                 : 0;
-            const planDef = PLANS.find((p) => p.id === m.plan);
+            const planDef = plans.find((p) => p.id === m.plan);
             setMembership({
                 status:       m.active ? 'ACTIVE' : 'EXPIRED',
                 expiryDate:   m.expiryDate ?? null,
@@ -403,7 +391,7 @@ function FeeRenewalPage() {
         } finally {
             setLoading(false);
         }
-    }, [currentUser?.studentId]);
+    }, [currentUser?.studentId, plans]);
 
     useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
@@ -448,7 +436,7 @@ function FeeRenewalPage() {
                                     ID: {currentUser?.studentId ?? membership?.studentId ?? '—'}
                                 </span>
                                 <span className="fr-sep">·</span>
-                                <span>Plan: {PLAN_LABELS[membership?.plan] ?? '—'}</span>
+                                <span>Plan: {planLabel(membership?.plan)}</span>
                             </p>
                         </div>
                         <StatusChip status={status} />
@@ -509,7 +497,7 @@ function FeeRenewalPage() {
                                         {history.map((h, i) => (
                                             <tr key={h.id ?? i}>
                                                 <td>{h.date ? formatDate(h.date) : '—'}</td>
-                                                <td>{PLAN_LABELS[h.plan] ?? h.plan ?? '—'}</td>
+                                                <td>{planLabel(h.plan)}</td>
                                                 <td className="fr-table__amt">
                                                     ₹{(h.amount ?? 0).toLocaleString('en-IN')}
                                                 </td>
@@ -531,11 +519,24 @@ function FeeRenewalPage() {
             <h2 className="fr-section-head">Choose a Plan</h2>
 
             <div className="row g-4 mb-5">
-                {PLANS.map(plan => (
+                {plansLoading ? (
+                    [1,2,3].map(i => (
+                        <div key={i} className="col-12 col-md-4">
+                            <div className="fr-plan" style={{ minHeight: 240 }}>
+                                {[['60%',22],['40%',16],['80%',14],['80%',14],['80%',14]].map(([w,h],j) => (
+                                    <div key={j} className="fr-skel" style={{ width: w, height: h, marginBottom: 14 }} />
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : plans.map(plan => (
                     <div key={plan.id} className="col-12 col-md-4">
                         <div className={`fr-plan${plan.featured ? ' fr-plan--featured' : ''}`}>
-                            {plan.featured && (
-                                <div className="fr-plan__badge">⭐ Best Value — Save {plan.savings}</div>
+                            {plan.featured && plan.savings && (
+                                <div className="fr-plan__badge">⭐ {plan.savings}</div>
+                            )}
+                            {plan.featured && !plan.savings && (
+                                <div className="fr-plan__badge">⭐ Best Value</div>
                             )}
                             <div className="fr-plan__head">
                                 <h3 className="fr-plan__title">{plan.title}</h3>
