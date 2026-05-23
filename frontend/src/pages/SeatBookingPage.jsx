@@ -19,8 +19,14 @@ const ZONES = ['All', 'Quiet', 'Group', 'Silent', 'Open'];
 
 const ZONE_INITIAL = { Quiet: 'Q', Group: 'G', Silent: 'S', Open: 'O' };
 
-function todayStr() {
-    return new Date().toISOString().split('T')[0];
+function isPastCutoff() {
+    return new Date().getHours() >= 18;
+}
+
+function minDateStr() {
+    const d = new Date();
+    if (isPastCutoff()) d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
 }
 
 function maxDateStr() {
@@ -114,7 +120,7 @@ function SeatBookingPage() {
     const navigate = useNavigate();
 
     /* Filters */
-    const [date, setDate]         = useState(todayStr());
+    const [date, setDate]         = useState(minDateStr());
     const [timeSlot, setTimeSlot] = useState('');
     const [zone, setZone]         = useState('All');
 
@@ -221,7 +227,7 @@ function SeatBookingPage() {
                             type="date"
                             className={`sb-date-input${filterErrors.date ? ' sb-input--err' : ''}`}
                             value={date}
-                            min={todayStr()}
+                            min={minDateStr()}
                             max={maxDateStr()}
                             onChange={e => {
                                 setDate(e.target.value);

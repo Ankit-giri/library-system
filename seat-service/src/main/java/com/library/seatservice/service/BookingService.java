@@ -59,6 +59,7 @@ public class BookingService {
         SeatEntity seat = seatRepository.findByIdAndDeletedFalse(request.getSeatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found with id " + request.getSeatId()));
 
+        validateBookingDateCutoff(request.getBookingDate());
         validateSeatAvailableForBooking(seat, request.getBookingDate(), request.getTimeSlot());
         validateStudentMembership(studentId != null ? studentId : userEmail);
         validateStudentBookingConflict(userEmail, request.getBookingDate(), request.getTimeSlot());
@@ -244,6 +245,14 @@ public class BookingService {
             }
         });
         bookingRepository.saveAll(expired);
+    }
+
+    private void validateBookingDateCutoff(LocalDate bookingDate) {
+        if (bookingDate.equals(LocalDate.now())
+                && java.time.LocalTime.now().isAfter(java.time.LocalTime.of(18, 0))) {
+            throw new IllegalStateException(
+                    "Bookings for today are closed after 6:00 PM. Please book for tomorrow or a future date.");
+        }
     }
 
     private void validateSeatAvailableForBooking(SeatEntity seat, LocalDate date, BookingTimeSlot slot) {
