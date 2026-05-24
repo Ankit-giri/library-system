@@ -72,22 +72,38 @@
     letter-spacing: -0.02em;
 }
 
-/* Admin card */
-.al-admin-card {
+/* ── Profile footer ───────────────────────── */
+.al-profile-footer {
+    padding: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+    position: relative;
+}
+
+.al-profile-trigger {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-4) var(--space-5);
-    border-bottom: 1px solid var(--color-border);
-    flex-shrink: 0;
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    text-align: left;
 }
-.al-admin-card__avatar {
-    width: 38px;
-    height: 38px;
+.al-profile-trigger:hover,
+.al-profile-trigger--open {
+    background: var(--color-bg);
+}
+.al-profile-trigger__avatar {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-primary), #5b9ef9);
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -95,14 +111,15 @@
     flex-shrink: 0;
     letter-spacing: 0.02em;
 }
-.al-admin-card__info {
+.al-profile-trigger__info {
+    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
-.al-admin-card__name {
-    font-size: 0.85rem;
+.al-profile-trigger__name {
+    font-size: 0.84rem;
     font-weight: 600;
     color: var(--color-text-primary);
     margin: 0;
@@ -110,14 +127,135 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.al-admin-card__badge {
-    display: inline-block;
-    font-size: 0.65rem;
+.al-profile-trigger__role {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+}
+.al-profile-trigger__chevron {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+/* Profile dropdown menu */
+.al-profile-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: var(--space-3);
+    right: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-card-hover);
+    z-index: 300;
+    overflow: hidden;
+    animation: al-menu-in 0.15s ease;
+}
+@keyframes al-menu-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.al-profile-menu__header {
+    padding: var(--space-3) var(--space-4);
+}
+.al-profile-menu__name {
+    font-size: 0.85rem;
     font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 2px;
+}
+.al-profile-menu__email {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.al-profile-menu__divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--space-1) 0;
+}
+.al-profile-menu__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: 9px var(--space-4);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    text-align: left;
+    transition: var(--transition-fast);
+}
+.al-profile-menu__item:hover,
+.al-profile-menu__item--active {
+    background: var(--color-bg);
+}
+.al-profile-menu__item--danger { color: var(--color-danger); }
+.al-profile-menu__item--danger:hover { background: rgba(255,59,48,0.06); }
+.al-profile-menu__icon {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+.al-profile-menu__item--danger .al-profile-menu__icon { color: var(--color-danger); }
+.al-profile-menu__arrow {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    color: var(--color-text-muted);
+}
+
+/* Theme picker (inline in menu) */
+.al-theme-picker {
+    padding: var(--space-2) var(--space-4) var(--space-3);
+    background: var(--color-bg);
+}
+.al-theme-picker__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-2);
+}
+.al-theme-picker__row {
+    display: flex;
+    gap: var(--space-2);
+}
+.al-theme-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: var(--transition-fast);
+}
+.al-theme-btn:hover {
+    border-color: var(--color-primary);
     color: var(--color-primary);
+}
+.al-theme-btn--active {
+    border-color: var(--color-primary);
     background: var(--color-primary-light);
-    padding: 2px var(--space-2);
-    border-radius: var(--radius-pill);
+    color: var(--color-primary);
+    font-weight: 600;
 }
 
 /* Nav */
@@ -167,30 +305,6 @@
 .al-nav__item--active .al-nav__icon { opacity: 1; }
 .al-nav__label { flex: 1; }
 
-/* Footer */
-.al-sidebar__footer {
-    padding: var(--space-3) var(--space-3);
-    border-top: 1px solid var(--color-border);
-    flex-shrink: 0;
-}
-.al-logout-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: 10px var(--space-3);
-    border-radius: var(--radius-sm);
-    color: var(--color-danger);
-    font-size: 0.875rem;
-    font-weight: 500;
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    transition: var(--transition-fast);
-}
-.al-logout-btn:hover {
-    background: #fff1f0;
-}
 
 /* ── Icon button util ─────────────────────── */
 .al-icon-btn {

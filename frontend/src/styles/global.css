@@ -67,7 +67,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .skeleton {
-    background: #e5e5e5;
+    background: var(--color-border);
     border-radius: var(--radius-sm);
     position: relative;
     overflow: hidden;
@@ -107,5 +107,150 @@ body::-webkit-scrollbar-thumb {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Fixes hardcoded colors across all components
+══════════════════════════════════════════════════ */
+[data-theme="dark"] {
+
+    /* ── Navbar ── */
+    .lib-navbar {
+        background: rgba(28, 28, 30, 0.85);
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .lib-navbar--scrolled {
+        background: rgba(28, 28, 30, 0.96);
+    }
+    .lib-nav-link:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+    .lib-bell:hover,
+    .lib-toggler:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+    .lib-badge {
+        border-color: var(--color-surface);
+    }
+    .lib-dropdown {
+        border-color: var(--color-border);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .lib-dropdown__item:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+
+    /* ── Admin sidebar ── */
+    .al-profile-menu__item--danger:hover { background: rgba(255,59,48,0.12); }
+    .al-logout-btn:hover { background: rgba(255,59,48,0.12); }
+
+    /* ── Cards / surfaces ── */
+    .sb-card, .fr-card, .sb-modal, .fr-pay-modal,
+    .ad-card, .ad-stat-card {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+    }
+
+    /* ── Seat booking ── */
+    .sb-slot { background: var(--color-surface); border-color: var(--color-border); }
+    .sb-slot:hover { background: var(--color-bg); }
+    .sb-zone-btn { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary); }
+    .sb-zone-btn:hover { background: var(--color-bg); }
+    .sb-date-input { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .sb-date-input:focus { border-color: var(--color-primary); }
+    .sb-seat--available { background: var(--color-surface); border-color: var(--color-border); }
+    .sb-seat--skeleton { background: var(--color-border); }
+    .sb-bar { background: var(--color-surface); border-top-color: var(--color-border); }
+    .sb-btn--ghost { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-primary); }
+
+    /* ── Admin dashboard stat icon wraps ── */
+    .ad-stat-card--blue  .ad-stat-card__icon-wrap { background: rgba(0,113,227,0.15); }
+    .ad-stat-card--green .ad-stat-card__icon-wrap { background: rgba(0,200,150,0.15); }
+    .ad-stat-card--teal  .ad-stat-card__icon-wrap { background: rgba(13,148,136,0.15); }
+    .ad-stat-card--purple .ad-stat-card__icon-wrap { background: rgba(124,58,237,0.15); }
+
+    /* ── Admin dashboard badges ── */
+    .ad-badge--confirmed { background: rgba(5,150,105,0.18); }
+    .ad-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .ad-badge--cancelled { background: rgba(255,59,48,0.15); }
+    .ad-badge--pending   { background: rgba(217,119,6,0.18); color: #fbbf24; }
+
+    /* ── Admin error bar ── */
+    .ad-error-bar { background: rgba(255,59,48,0.12); border-color: rgba(255,59,48,0.25); }
+
+    /* ── Tables ── */
+    .table { color: var(--color-text-primary); }
+    .table thead th { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-secondary); }
+    .table td, .table th { border-color: var(--color-border); }
+    .table-hover tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+    /* ── Inputs & forms ── */
+    input, select, textarea {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    input:focus, select:focus, textarea:focus {
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+    input::placeholder, textarea::placeholder { color: var(--color-text-muted); }
+
+    /* ── Bootstrap overrides ── */
+    .modal-content { background: var(--color-surface); border-color: var(--color-border); }
+    .modal-header { border-color: var(--color-border); }
+    .modal-footer { border-color: var(--color-border); }
+    .dropdown-menu { background: var(--color-surface); border-color: var(--color-border); }
+    .dropdown-item { color: var(--color-text-primary); }
+    .dropdown-item:hover { background: var(--color-bg); }
+    .list-group-item { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .form-control, .form-select {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .form-control:focus, .form-select:focus {
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+    .form-control::placeholder { color: var(--color-text-muted); }
+
+    /* ── Fee Renewal ── */
+    .fr-plan { background: var(--color-surface); border-color: var(--color-border); }
+    .fr-plan__btn { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-primary); }
+    .fr-field__input { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .fr-card-wrap { background: var(--color-surface); }
+    .fr-pay-summary { background: var(--color-bg); }
+
+    /* ── Admin pages ── */
+    .ab-filter-card, .as-filter-bar, .ar-filter-card, .apl-modal,
+    .ar-card, .ab-table-card { background: var(--color-surface); border-color: var(--color-border); }
+    .ab-filter input, .ab-filter select,
+    .as-filter-bar input, .as-filter-bar select,
+    .ar-filter-card input, .ar-filter-card select {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .apl-input, .apl-textarea {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .apl-card { background: var(--color-surface); border-color: var(--color-border); }
+    .apl-backdrop { background: rgba(0,0,0,0.6); }
+
+    /* ── Skeleton shimmer ── */
+    .skeleton::after,
+    .ad-skel::after,
+    .fr-skel::after,
+    .sb-seat--skeleton::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
     }
 }

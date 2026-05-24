@@ -3,6 +3,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 /* Layout + route guards */
 import Layout from './components/Layout';
@@ -37,6 +38,7 @@ import AdminPlansPage from './pages/admin/AdminPlansPage';
 
 function App() {
     return (
+        <ThemeProvider>
         <AuthProvider>
             <NotificationProvider>
                 <BrowserRouter>
@@ -76,6 +78,7 @@ function App() {
                 </BrowserRouter>
             </NotificationProvider>
         </AuthProvider>
+        </ThemeProvider>
     );
 }
 

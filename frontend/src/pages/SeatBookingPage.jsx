@@ -19,6 +19,13 @@ const ZONES = ['All', 'Quiet', 'Group', 'Silent', 'Open'];
 
 const ZONE_INITIAL = { Quiet: 'Q', Group: 'G', Silent: 'S', Open: 'O' };
 
+function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function isPastCutoff() {
     return new Date().getHours() >= 18;
 }
@@ -26,13 +33,13 @@ function isPastCutoff() {
 function minDateStr() {
     const d = new Date();
     if (isPastCutoff()) d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
 }
 
 function maxDateStr() {
     const d = new Date();
     d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
 }
 
 /* ── Legend Item ─────────────────────────────── */
@@ -142,7 +149,13 @@ function SeatBookingPage() {
 
     const validate = () => {
         const e = {};
-        if (!date)     e.date     = 'Please select a date.';
+        if (!date) {
+            e.date = 'Please select a date.';
+        } else if (date < minDateStr()) {
+            e.date = isPastCutoff()
+                ? 'Bookings for today are closed after 6:00 PM. Please select a future date.'
+                : 'Please select today or a future date.';
+        }
         if (!timeSlot) e.timeSlot = 'Please select a time slot.';
         return e;
     };

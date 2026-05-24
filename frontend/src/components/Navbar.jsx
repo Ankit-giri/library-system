@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useTheme } from '../context/ThemeContext';
 import './Navbar.css';
 
 function BellIcon() {
@@ -13,6 +14,20 @@ function BellIcon() {
     );
 }
 
+function ChevronIcon({ open }) {
+    return (
+        <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12" style={{ transition: 'transform 0.15s ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+        </svg>
+    );
+}
+
+const THEME_OPTIONS = [
+    { value: 'light',  label: 'Light',  icon: '☀️' },
+    { value: 'dark',   label: 'Dark',   icon: '🌙' },
+    { value: 'system', label: 'System', icon: '💻' },
+];
+
 function navCls({ isActive }) {
     return `nav-link lib-nav-link${isActive ? ' active' : ''}`;
 }
@@ -20,8 +35,10 @@ function navCls({ isActive }) {
 function Navbar() {
     const { currentUser, isAuthenticated, isAdmin, logout } = useAuth();
     const { unreadCount, fetchNotifications } = useNotifications();
+    const { theme, setTheme } = useTheme();
     const navigate = useNavigate();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -42,6 +59,7 @@ function Navbar() {
         function onClickOutside(e) {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setDropdownOpen(false);
+                setSettingsOpen(false);
             }
         }
         document.addEventListener('mousedown', onClickOutside);
@@ -50,8 +68,14 @@ function Navbar() {
 
     const handleLogout = () => {
         setDropdownOpen(false);
+        setSettingsOpen(false);
         logout();
         navigate('/login');
+    };
+
+    const closeDropdown = () => {
+        setDropdownOpen(false);
+        setSettingsOpen(false);
     };
 
     const initials = currentUser?.fullName
@@ -126,7 +150,10 @@ function Navbar() {
                         <div className="lib-user-menu" ref={dropdownRef}>
                             <button
                                 className="lib-avatar"
-                                onClick={() => setDropdownOpen((v) => !v)}
+                                onClick={() => {
+                                    setDropdownOpen(v => !v);
+                                    if (dropdownOpen) setSettingsOpen(false);
+                                }}
                                 aria-haspopup="true"
                                 aria-expanded={dropdownOpen}
                                 title={currentUser?.fullName || 'Account'}
@@ -144,17 +171,38 @@ function Navbar() {
                                     <NavLink
                                         to="/profile"
                                         className="lib-dropdown__item"
-                                        onClick={() => setDropdownOpen(false)}
+                                        onClick={closeDropdown}
                                     >
                                         Profile
                                     </NavLink>
-                                    <NavLink
-                                        to="/settings"
-                                        className="lib-dropdown__item"
-                                        onClick={() => setDropdownOpen(false)}
+
+                                    {/* Settings with inline theme picker */}
+                                    <button
+                                        className={`lib-dropdown__item lib-dropdown__item--settings${settingsOpen ? ' lib-dropdown__item--open' : ''}`}
+                                        onClick={() => setSettingsOpen(v => !v)}
                                     >
-                                        Settings
-                                    </NavLink>
+                                        <span>Settings</span>
+                                        <ChevronIcon open={settingsOpen} />
+                                    </button>
+
+                                    {settingsOpen && (
+                                        <div className="lib-theme-picker">
+                                            <p className="lib-theme-picker__label">Appearance</p>
+                                            <div className="lib-theme-picker__row">
+                                                {THEME_OPTIONS.map(opt => (
+                                                    <button
+                                                        key={opt.value}
+                                                        className={`lib-theme-btn${theme === opt.value ? ' lib-theme-btn--active' : ''}`}
+                                                        onClick={() => setTheme(opt.value)}
+                                                    >
+                                                        <span>{opt.icon}</span>
+                                                        <span>{opt.label}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="lib-dropdown__divider" />
                                     <button
                                         className="lib-dropdown__item lib-dropdown__item--danger"
