@@ -9,10 +9,6 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank(message = "Student ID is required")
-    @Pattern(regexp = "STU[0-9]{7}", message = "Student ID must be STU followed by 7 digits")
-    private String studentId;
-
     @NotBlank(message = "Full name is required")
     @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
     private String fullName;

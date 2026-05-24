@@ -40,6 +40,9 @@ public class BookingEntity {
     @Column(name = "student_id", length = 32)
     private String studentId;
 
+    @Column(name = "user_name", length = 180)
+    private String userName;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seat_id", nullable = false)
     private SeatEntity seat;

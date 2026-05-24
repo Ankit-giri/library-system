@@ -111,18 +111,20 @@ export default function AdminReportsPage() {
                     })),
                 };
             } else {
-                // Revenue report is at /api/admin/reports/revenue?month=YYYY-MM
-                const month = dateFrom.substring(0, 7);
-                const res   = await api.get('/api/admin/reports/revenue', { params: { month } });
+                const res = await api.get('/api/admin/reports/revenue', {
+                    params: { from: dateFrom, to: dateTo },
+                });
                 const d = res.data;
-                const rows = Object.entries(d.dailyBreakdown ?? {}).map(([date, revenue]) => ({
-                    date,
-                    revenue: Number(revenue),
-                    count: null,
-                }));
+                const rows = Object.entries(d.dailyBreakdown ?? {})
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([date, revenue]) => ({
+                        date,
+                        revenue: Number(revenue),
+                        count: null,
+                    }));
                 data = {
-                    totalRevenue:       Number(d.totalRevenue ?? 0),
-                    totalTransactions:  rows.length,
+                    totalRevenue:      Number(d.totalRevenue ?? 0),
+                    totalTransactions: d.totalTransactions ?? rows.length,
                     rows,
                 };
             }

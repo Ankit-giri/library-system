@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 import './AdminStudentsPage.css';
 
 const PAGE_SIZE = 10;
@@ -29,10 +30,10 @@ function MembershipChip({ status, expiry }) {
     return <span className={cls}>{label}</span>;
 }
 
-function SkeletonRow() {
+function SkeletonRow({ cols = 7 }) {
     return (
         <tr className="as-skel-row">
-            {Array.from({ length: 7 }, (_, i) => (
+            {Array.from({ length: cols }, (_, i) => (
                 <td key={i}><div className="as-skel" /></td>
             ))}
         </tr>
@@ -58,7 +59,7 @@ function DeleteModal({ student, onConfirm, onClose, loading }) {
                 <div className="as-modal__body">
                     <div className="as-delete-icon">⚠️</div>
                     <p className="as-modal__text">
-                        Are you sure you want to delete <strong>{student.name}</strong> ({student.studentId})?
+                        Are you sure you want to delete <strong>{student.fullName}</strong> ({student.studentId})?
                         This will permanently remove all their bookings and payment records.
                     </p>
                 </div>
@@ -89,9 +90,9 @@ function DetailModal({ student, onClose }) {
         <div className="as-modal-backdrop" onClick={onClose}>
             <div className="as-modal as-modal--lg" onClick={e => e.stopPropagation()}>
                 <div className="as-modal__hd">
-                    <div className="as-modal__hd-avatar">{student.name?.[0]?.toUpperCase()}</div>
+                    <div className="as-modal__hd-avatar">{student.fullName?.[0]?.toUpperCase()}</div>
                     <div>
-                        <h5 className="as-modal__title">{student.name}</h5>
+                        <h5 className="as-modal__title">{student.fullName}</h5>
                         <p className="as-modal__subtitle">{student.studentId} · {student.email}</p>
                     </div>
                     <button className="as-modal__close" onClick={onClose}>✕</button>
@@ -195,8 +196,87 @@ function DetailModal({ student, onClose }) {
     );
 }
 
+/* ── Admins table ────────────────────────── */
+function AdminsTable({ currentUserEmail }) {
+    const [admins, setAdmins] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/api/admin/students/admins')
+            .then(r => setAdmins(r.data ?? []))
+            .catch(() => setAdmins([]))
+            .finally(() => setLoading(false));
+    }, []);
+
+    return (
+        <div className="as-section mb-6">
+            <div className="as-section-hd">
+                <h2 className="as-section-title">Administrators</h2>
+                <span className="as-section-count">{admins.length}</span>
+            </div>
+            <div className="as-card">
+                <div className="table-responsive">
+                    <table className="table table-hover mb-0 as-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Admin</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading
+                                ? Array.from({ length: 2 }, (_, i) => <SkeletonRow key={i} cols={5} />)
+                                : admins.length === 0
+                                    ? (
+                                        <tr>
+                                            <td colSpan={5}>
+                                                <div className="as-empty">
+                                                    <p className="as-empty__title">No admins found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                    : admins.map((a, idx) => (
+                                        <tr key={a.id}>
+                                            <td className="as-cell-num">{idx + 1}</td>
+                                            <td>
+                                                <div className="as-student-cell">
+                                                    <div className="as-student-avatar as-student-avatar--admin">
+                                                        {a.fullName?.[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="as-cell-primary">{a.fullName}</div>
+                                                        <div className="as-cell-sub">Administrator</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="as-cell-email">{a.email}</td>
+                                            <td>{formatDate(a.createdAt)}</td>
+                                            <td>
+                                                <span className={`as-chip ${a.active ? 'as-chip--active' : 'as-chip--expired'}`}>
+                                                    {a.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                                {a.email === currentUserEmail && (
+                                                    <span className="as-you-badge">You</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ── Main page ───────────────────────────── */
 export default function AdminStudentsPage() {
+    const { currentUser } = useAuth();
     const [students, setStudents]       = useState([]);
     const [loading, setLoading]         = useState(true);
     const [error, setError]             = useState('');
@@ -210,13 +290,11 @@ export default function AdminStudentsPage() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [actionLoading, setActLoading]  = useState(null);
 
-    /* Debounce search */
     useEffect(() => {
         const t = setTimeout(() => { setDebSearch(search); setPage(0); }, 320);
         return () => clearTimeout(t);
     }, [search]);
 
-    /* Reset page on filter change */
     useEffect(() => { setPage(0); }, [statusFilter]);
 
     const fetchStudents = useCallback(async () => {
@@ -225,7 +303,8 @@ export default function AdminStudentsPage() {
         try {
             const params = { page, size: PAGE_SIZE };
             if (debSearch) params.search = debSearch;
-            if (statusFilter !== 'ALL') params.status = statusFilter;
+            if (statusFilter === 'ACTIVE')   params.active = true;
+            if (statusFilter === 'INACTIVE') params.active = false;
             const { data } = await api.get('/api/admin/students', { params });
             setStudents(data.content ?? data ?? []);
             setTotalPages(data.totalPages ?? 1);
@@ -241,11 +320,11 @@ export default function AdminStudentsPage() {
 
     const handleToggleStatus = async (student) => {
         const newActive = !student.active;
-        if (!newActive && !window.confirm(`Deactivate ${student.name}? They won't be able to log in.`)) return;
+        if (!newActive && !window.confirm(`Deactivate ${student.fullName}? They won't be able to log in.`)) return;
         setActLoading(student.id);
         try {
-            await api.put(`/api/admin/students/${student.id}/status`, { active: newActive });
-            toast.success(`${student.name} ${newActive ? 'activated' : 'deactivated'}.`);
+            await api.put(`/api/admin/students/${student.id}/activate`, null, { params: { active: newActive } });
+            toast.success(`${student.fullName} ${newActive ? 'activated' : 'deactivated'}.`);
             fetchStudents();
         } catch {
             toast.error('Failed to update status.');
@@ -259,7 +338,7 @@ export default function AdminStudentsPage() {
         setActLoading(deleteTarget.id);
         try {
             await api.delete(`/api/admin/students/${deleteTarget.id}`);
-            toast.success(`${deleteTarget.name} deleted.`);
+            toast.success(`${deleteTarget.fullName} deleted.`);
             setDeleteTarget(null);
             fetchStudents();
         } catch {
@@ -276,8 +355,17 @@ export default function AdminStudentsPage() {
             <div className="as-page-hd">
                 <div>
                     <h1 className="as-page-hd__title">Students</h1>
-                    <p className="as-page-hd__sub">{totalElements} registered members</p>
+                    <p className="as-page-hd__sub">{totalElements} registered students</p>
                 </div>
+            </div>
+
+            {/* ── Admins section (above) ── */}
+            <AdminsTable currentUserEmail={currentUser?.email} />
+
+            {/* ── Students section header ── */}
+            <div className="as-section-hd mb-4">
+                <h2 className="as-section-title">Students</h2>
+                <span className="as-section-count">{totalElements}</span>
             </div>
 
             {/* ── Filters ── */}
@@ -317,7 +405,7 @@ export default function AdminStudentsPage() {
                 </div>
             )}
 
-            {/* ── Table ── */}
+            {/* ── Students table ── */}
             <div className="as-card">
                 <div className="table-responsive">
                     <table className="table table-hover mb-0 as-table">
@@ -352,9 +440,9 @@ export default function AdminStudentsPage() {
                                             <td className="as-cell-num">{page * PAGE_SIZE + idx + 1}</td>
                                             <td>
                                                 <div className="as-student-cell">
-                                                    <div className="as-student-avatar">{s.name?.[0]?.toUpperCase()}</div>
+                                                    <div className="as-student-avatar">{s.fullName?.[0]?.toUpperCase()}</div>
                                                     <div>
-                                                        <div className="as-cell-primary">{s.name}</div>
+                                                        <div className="as-cell-primary">{s.fullName}</div>
                                                         <div className="as-cell-sub">{s.studentId}</div>
                                                     </div>
                                                 </div>
@@ -397,7 +485,6 @@ export default function AdminStudentsPage() {
                     </table>
                 </div>
 
-                {/* ── Pagination ── */}
                 {totalPages > 1 && (
                     <div className="as-pagination">
                         <p className="as-pagination__info">

@@ -59,3 +59,24 @@
     --space-16: 4rem;     /* 64px */
     --space-20: 5rem;     /* 80px */
 }
+
+[data-theme="dark"] {
+    --color-bg: #1c1c1e;
+    --color-surface: #2c2c2e;
+    --color-glass: rgba(44, 44, 46, 0.9);
+
+    --color-text-primary: #f5f5f7;
+    --color-text-secondary: #aeaeb2;
+    --color-text-muted: #636366;
+
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border-glass: rgba(255, 255, 255, 0.15);
+
+    --color-primary-light: rgba(0, 113, 227, 0.18);
+
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.5);
+
+    --glass-bg: rgba(44, 44, 46, 0.85);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+}

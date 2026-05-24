@@ -447,7 +447,53 @@
 .as-btn--danger { background: var(--color-danger); color: #fff; }
 .as-btn--danger:hover:not(:disabled) { background: #d4291e; }
 
-/* Spinner */
+/* ── Section headers ─────────────────────── */
+.as-section { }
+.mb-6 { margin-bottom: 2rem; }
+.mb-4 { margin-bottom: 1.25rem; }
+.as-section-hd {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+.as-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+.as-section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: var(--radius-pill);
+}
+.as-student-avatar--admin {
+    background: linear-gradient(135deg, var(--color-warning), #e07b00);
+}
+.as-you-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Spinner */
 .as-spinner {
     width: 32px;
     height: 32px;

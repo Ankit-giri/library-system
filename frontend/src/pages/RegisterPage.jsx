@@ -27,7 +27,7 @@ function validateField(name, value, allFields) {
         case 'fullName':
             return value.trim().length < 2 ? 'Name must be at least 2 characters.' : '';
         case 'studentId':
-            return !value.trim() ? 'Student ID is required.' : '';
+            return '';
         case 'email':
             return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? 'Enter a valid email address.' : '';
         case 'password':
@@ -38,7 +38,7 @@ function validateField(name, value, allFields) {
     }
 }
 
-const EMPTY = { fullName: '', studentId: '', email: '', password: '', confirmPassword: '' };
+const EMPTY = { fullName: '', email: '', password: '', confirmPassword: '' };
 
 function RegisterPage() {
     const { register, login } = useAuth();
@@ -95,7 +95,6 @@ function RegisterPage() {
             // ISSUE-6 fix: RegisterRequest expects 'fullName', not 'name'
             await register({
                 fullName: fields.fullName,
-                studentId: fields.studentId,
                 email: fields.email,
                 password: fields.password,
             });
@@ -149,34 +148,19 @@ function RegisterPage() {
                                 {fieldError('fullName')}
                             </div>
 
-                            {/* Student ID + Email */}
-                            <div className="auth-field-row">
-                                <div className="auth-field">
-                                    <label className="auth-label" htmlFor="studentId">Student ID</label>
-                                    <input
-                                        id="studentId" name="studentId" type="text"
-                                        className={inputClass('studentId')}
-                                        placeholder="STU2024001"
-                                        value={fields.studentId}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        autoComplete="off"
-                                    />
-                                    {fieldError('studentId')}
-                                </div>
-                                <div className="auth-field">
-                                    <label className="auth-label" htmlFor="email">Email</label>
-                                    <input
-                                        id="email" name="email" type="email"
-                                        className={inputClass('email')}
-                                        placeholder="you@college.edu"
-                                        value={fields.email}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        autoComplete="email"
-                                    />
-                                    {fieldError('email')}
-                                </div>
+                            {/* Email */}
+                            <div className="auth-field">
+                                <label className="auth-label" htmlFor="email">Email</label>
+                                <input
+                                    id="email" name="email" type="email"
+                                    className={inputClass('email')}
+                                    placeholder="you@college.edu"
+                                    value={fields.email}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    autoComplete="email"
+                                />
+                                {fieldError('email')}
                             </div>
 
                             {/* Password */}

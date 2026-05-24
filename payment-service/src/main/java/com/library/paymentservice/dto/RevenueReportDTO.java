@@ -10,6 +10,7 @@ import lombok.Data;
 public class RevenueReportDTO {
     private String month;
     private BigDecimal totalRevenue;
+    private long totalTransactions;
     private Map<String, BigDecimal> revenueByPlan;
     private Map<String, BigDecimal> dailyBreakdown;
 }

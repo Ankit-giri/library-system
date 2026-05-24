@@ -15,6 +15,7 @@ public class BookingResponse {
     private Long userId;
     private String userEmail;
     private String studentId;
+    private String studentName;
     private Long seatId;
     private String seatNumber;
     private SeatZone zone;

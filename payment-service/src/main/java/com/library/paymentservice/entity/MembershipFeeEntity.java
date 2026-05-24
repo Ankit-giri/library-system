@@ -48,4 +48,13 @@ public class MembershipFeeEntity {
     @CreationTimestamp
     @Column(name = "paid_at", nullable = false, updatable = false)
     private OffsetDateTime paidAt;
+
+    @Column(name = "razorpay_order_id", length = 64)
+    private String razorpayOrderId;
+
+    @Column(name = "razorpay_payment_id", length = 64)
+    private String razorpayPaymentId;
+
+    @Column(name = "razorpay_signature", length = 128)
+    private String razorpaySignature;
 }
