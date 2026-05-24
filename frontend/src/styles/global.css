@@ -168,7 +168,6 @@ body::-webkit-scrollbar-thumb {
     .sb-date-input:focus { border-color: var(--color-primary); }
     .sb-seat--available { background: var(--color-surface); border-color: var(--color-border); }
     .sb-seat--skeleton { background: var(--color-border); }
-    .sb-bar { background: var(--color-surface); border-top-color: var(--color-border); }
     .sb-btn--ghost { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-primary); }
 
     /* ── Admin dashboard stat icon wraps ── */
@@ -377,4 +376,35 @@ body::-webkit-scrollbar-thumb {
 
     /* ── Plans page — action button hover ── */
     .apl-action-btn--deactivate { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+
+    /* ── Student dashboard — welcome banner ── */
+    .db-welcome {
+        background: linear-gradient(120deg, rgba(0,113,227,0.1) 0%, rgba(0,113,227,0.04) 100%);
+        border-color: rgba(0,113,227,0.18);
+    }
+    .db-welcome--warn {
+        background: linear-gradient(120deg, rgba(255,149,0,0.1) 0%, rgba(255,149,0,0.04) 100%);
+        border-color: rgba(255,149,0,0.2);
+    }
+
+    /* ── Student dashboard — skeleton ── */
+    .db-skel {
+        background: var(--color-border);
+    }
+    .db-skel::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* ── Student dashboard — quick action cards ── */
+    .db-quick-action {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+    }
+
+    /* ── Student dashboard — zone chip & badge ── */
+    .db-zone-chip { background: rgba(0,113,227,0.15); }
+    .db-badge--grey { background: rgba(255,255,255,0.08); color: var(--color-text-secondary); }
+
+    /* ── Seat booking — confirmation bar ── */
+    .sb-bar__inner { background: var(--color-surface); }
 }

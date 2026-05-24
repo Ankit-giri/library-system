@@ -462,11 +462,11 @@
 /* ── Booking Summary Bar ─────────────────────── */
 .sb-bar {
     position: fixed;
-    bottom: 0;
+    bottom: var(--space-8);
     left: 0;
     right: 0;
     z-index: 500;
-    padding: 0 var(--space-4) var(--space-3);
+    padding: 0 var(--space-4);
     pointer-events: none;
     transform: translateY(110%);
     transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
