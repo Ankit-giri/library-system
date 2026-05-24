@@ -244,5 +244,5 @@ library-system/
 ├── notification-service/ In-app notifications + email log (port 8086)
 ├── admin-service/        Placeholder — admin logic lives in owning services (port 8087)
 ├── frontend/             React 18 + Vite SPA
-├── docker-compose.yml
+└── docker-compose.yml
 ```
