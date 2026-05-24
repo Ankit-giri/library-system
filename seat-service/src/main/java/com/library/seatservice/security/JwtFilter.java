@@ -6,13 +6,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -44,7 +45,11 @@ public class JwtFilter extends OncePerRequestFilter {
                                     .collect(Collectors.toList());
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    Map<String, Object> details = new HashMap<>();
+                    details.put("studentId", claims.get("studentId", String.class));
+                    details.put("userId", claims.get("userId", Integer.class));
+                    details.put("fullName", claims.get("fullName", String.class));
+                    auth.setDetails(details);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             } catch (Exception ignored) {

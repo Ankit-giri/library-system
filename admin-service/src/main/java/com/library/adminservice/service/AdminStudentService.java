@@ -49,6 +49,12 @@ public class AdminStudentService {
                 .map(this::toSummaryDto);
     }
 
+    public List<StudentSummaryDTO> findAdmins() {
+        return userRepository.findAllAdmins().stream()
+                .map(this::toSummaryDto)
+                .collect(Collectors.toList());
+    }
+
     public StudentDetailDTO getStudentDetail(Long id) {
         UserEntity user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));

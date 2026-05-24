@@ -19,14 +19,27 @@ const ZONES = ['All', 'Quiet', 'Group', 'Silent', 'Open'];
 
 const ZONE_INITIAL = { Quiet: 'Q', Group: 'G', Silent: 'S', Open: 'O' };
 
-function todayStr() {
-    return new Date().toISOString().split('T')[0];
+function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function isPastCutoff() {
+    return new Date().getHours() >= 18;
+}
+
+function minDateStr() {
+    const d = new Date();
+    if (isPastCutoff()) d.setDate(d.getDate() + 1);
+    return localDateStr(d);
 }
 
 function maxDateStr() {
     const d = new Date();
     d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
 }
 
 /* ── Legend Item ─────────────────────────────── */
@@ -45,15 +58,17 @@ function SeatCell({ seat, selectedId, onSelect }) {
     const isSelected  = seat.id === selectedId;
 
     const variant =
-        isSelected  ? 'selected'    :
-        isAvailable ? 'available'   :
-        seat.status === 'BOOKED' ? 'booked' : 'maintenance';
+        isSelected                                            ? 'selected'    :
+        isAvailable                                           ? 'available'   :
+        seat.status === 'OCCUPIED' || seat.status === 'BOOKED' ? 'booked'   :
+                                                                 'maintenance';
 
     const zoneInit = ZONE_INITIAL[seat.zone] ?? seat.zone?.[0] ?? '';
 
     const tooltip =
-        seat.status === 'BOOKED'       ? 'Already booked'    :
-        seat.status === 'MAINTENANCE'  ? 'Under maintenance' :
+        seat.status === 'OCCUPIED' || seat.status === 'BOOKED' ? 'Already booked for this slot' :
+        seat.status === 'MAINTENANCE'                          ? 'Under maintenance'             :
+        seat.status === 'UNAVAILABLE'                          ? 'Unavailable'                  :
         `${seat.seatNumber} · ${seat.zone}`;
 
     return (
@@ -112,7 +127,7 @@ function SeatBookingPage() {
     const navigate = useNavigate();
 
     /* Filters */
-    const [date, setDate]         = useState(todayStr());
+    const [date, setDate]         = useState(minDateStr());
     const [timeSlot, setTimeSlot] = useState('');
     const [zone, setZone]         = useState('All');
 
@@ -134,7 +149,13 @@ function SeatBookingPage() {
 
     const validate = () => {
         const e = {};
-        if (!date)     e.date     = 'Please select a date.';
+        if (!date) {
+            e.date = 'Please select a date.';
+        } else if (date < minDateStr()) {
+            e.date = isPastCutoff()
+                ? 'Bookings for today are closed after 6:00 PM. Please select a future date.'
+                : 'Please select today or a future date.';
+        }
         if (!timeSlot) e.timeSlot = 'Please select a time slot.';
         return e;
     };
@@ -219,7 +240,7 @@ function SeatBookingPage() {
                             type="date"
                             className={`sb-date-input${filterErrors.date ? ' sb-input--err' : ''}`}
                             value={date}
-                            min={todayStr()}
+                            min={minDateStr()}
                             max={maxDateStr()}
                             onChange={e => {
                                 setDate(e.target.value);

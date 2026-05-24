@@ -103,6 +103,25 @@
 
 .auth-alert__icon { flex-shrink: 0; }
 
+.auth-alert__action-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid currentColor;
+    background: transparent;
+    color: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+.auth-alert--error .auth-alert__action-btn:hover {
+    background: var(--color-danger);
+    color: #fff;
+}
+
 /* ── Fields ─────────────────────────────────── */
 .auth-field { margin-bottom: var(--space-4); }
 

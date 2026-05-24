@@ -2,7 +2,7 @@ package com.library.apigateway.config;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,14 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.cloud.gateway.route.RouteLocator;
-import org.springframework.cloud.gateway.route.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -27,26 +24,10 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+// Routes are declared in application.yml / application-docker.yml.
+// This class only wires global filters and CORS.
 @Configuration
 public class GatewayConfig {
-
-    @Bean
-    public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
-        return builder.routes()
-                .route("auth-service", r -> r.path("/api/auth/**")
-                        .uri("http://localhost:8081"))
-                .route("student-service", r -> r.path("/api/students/**")
-                        .uri("http://localhost:8082"))
-                .route("seat-service", r -> r.path("/api/seats/**", "/api/bookings/**")
-                        .uri("http://localhost:8083"))
-                .route("payment-service", r -> r.path("/api/payments/**")
-                        .uri("http://localhost:8084"))
-                .route("notification-service", r -> r.path("/api/notifications/**")
-                        .uri("http://localhost:8085"))
-                .route("admin-service", r -> r.path("/api/admin/**")
-                        .uri("http://localhost:8086"))
-                .build();
-    }
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -68,23 +49,15 @@ public class GatewayConfig {
 
     @Bean
     public CorsWebFilter corsWebFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration());
-        return new CorsWebFilter(source);
-    }
-
-    private CorsConfiguration corsConfiguration() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
-        config.setAllowedMethods(Collections.singletonList("GET"));
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("OPTIONS");
-        config.setAllowedHeaders(Collections.singletonList("*"));
+        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(Duration.ofHours(1));
-        return config;
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsWebFilter(source);
     }
 
     private static final class RequestLoggingFilter implements GlobalFilter, Ordered {
@@ -95,11 +68,13 @@ public class GatewayConfig {
             ServerHttpRequest request = exchange.getRequest();
             Instant start = Instant.now();
 
-            return chain.filter(exchange).doOnSuccessOrError((aVoid, throwable) -> {
+            // doOnSuccessOrError removed in Reactor 3.4 — use doFinally instead
+            return chain.filter(exchange).doFinally(signal -> {
                 ServerHttpResponse response = exchange.getResponse();
                 long durationMs = Duration.between(start, Instant.now()).toMillis();
                 log.info("[Gateway] {} {} -> {} ({} ms)",
-                        request.getMethod(), request.getURI().getRawPath(), response.getStatusCode(), durationMs);
+                        request.getMethod(), request.getURI().getRawPath(),
+                        response.getStatusCode(), durationMs);
             });
         }
 
@@ -133,7 +108,6 @@ public class GatewayConfig {
                     return exchange.getResponse().setComplete();
                 }
             }
-
             return chain.filter(exchange);
         }
 

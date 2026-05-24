@@ -13,6 +13,7 @@ import com.library.seatservice.entity.SeatZone;
 import com.library.seatservice.external.PaymentClient;
 import com.library.seatservice.exception.ResourceNotFoundException;
 import com.library.seatservice.repository.BookingRepository;
+import com.library.seatservice.repository.BookingSpecifications;
 import com.library.seatservice.repository.SeatRepository;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -54,16 +55,21 @@ public class BookingService {
     public BookingResponse createBooking(BookingRequest request, Authentication authentication) {
         String userEmail = resolveCurrentUserEmail(authentication);
         String studentId = resolveCurrentStudentId(authentication);
+        Long userId = resolveCurrentUserId(authentication);
+        String userName = resolveCurrentUserName(authentication);
         SeatEntity seat = seatRepository.findByIdAndDeletedFalse(request.getSeatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found with id " + request.getSeatId()));
 
+        validateBookingDateCutoff(request.getBookingDate());
         validateSeatAvailableForBooking(seat, request.getBookingDate(), request.getTimeSlot());
         validateStudentMembership(studentId != null ? studentId : userEmail);
         validateStudentBookingConflict(userEmail, request.getBookingDate(), request.getTimeSlot());
 
         BookingEntity booking = BookingEntity.builder()
+                .userId(userId)
                 .userEmail(userEmail)
                 .studentId(studentId)
+                .userName(userName)
                 .seat(seat)
                 .bookingDate(request.getBookingDate())
                 .timeSlot(request.getTimeSlot())
@@ -132,7 +138,7 @@ public class BookingService {
     }
 
     public BookingReportResponse getBookingReport(LocalDate from, LocalDate to) {
-        List<BookingEntity> bookings = bookingRepository.findByFiltersForReport(from, to, null, null, null);
+        List<BookingEntity> bookings = bookingRepository.findByDateRange(from, to);
         long total = bookings.size();
         long active = bookings.stream().filter(b -> b.getStatus() == BookingStatus.ACTIVE).count();
         long cancelled = bookings.stream().filter(b -> b.getStatus() == BookingStatus.CANCELLED).count();
@@ -177,12 +183,10 @@ public class BookingService {
     }
 
     public String exportBookingsCsv(String month) {
-        List<BookingEntity> bookings = bookingRepository.findByFiltersForReport(null, null, null, null, null);
-        if (month != null) {
-            bookings = bookings.stream()
-                    .filter(booking -> booking.getBookingDate().toString().startsWith(month))
-                    .toList();
-        }
+        List<BookingEntity> all = bookingRepository.findAll();
+        List<BookingEntity> bookings = month != null
+                ? all.stream().filter(b -> b.getBookingDate().toString().startsWith(month)).toList()
+                : all;
         StringBuilder csv = new StringBuilder(
                 "BookingId,StudentId,UserEmail,SeatNumber,Zone,Date,Slot,Status,CancelledAt,AdminCancelReason\n");
         bookings.forEach(booking -> csv.append(String.format("%d,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
@@ -199,12 +203,15 @@ public class BookingService {
         return csv.toString();
     }
 
-    public Page<BookingResponse> getAllBookings(LocalDate date,
+    public Page<BookingResponse> getAllBookings(LocalDate dateFrom,
+            LocalDate dateTo,
             BookingStatus status,
             SeatZone zone,
             String studentId,
+            String search,
             Pageable pageable) {
-        return bookingRepository.findByFilters(date, status, zone, studentId, pageable)
+        return bookingRepository.findAll(
+                BookingSpecifications.forAdminList(dateFrom, dateTo, status, zone, studentId, search), pageable)
                 .map(this::toResponse);
     }
 
@@ -242,6 +249,14 @@ public class BookingService {
             }
         });
         bookingRepository.saveAll(expired);
+    }
+
+    private void validateBookingDateCutoff(LocalDate bookingDate) {
+        if (bookingDate.equals(LocalDate.now())
+                && java.time.LocalTime.now().isAfter(java.time.LocalTime.of(18, 0))) {
+            throw new IllegalStateException(
+                    "Bookings for today are closed after 6:00 PM. Please book for tomorrow or a future date.");
+        }
     }
 
     private void validateSeatAvailableForBooking(SeatEntity seat, LocalDate date, BookingTimeSlot slot) {
@@ -307,12 +322,34 @@ public class BookingService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AccessDeniedException("Authentication required");
         }
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername();
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object sid = map.get("studentId");
+            if (sid instanceof String s) return s;
         }
-        if (principal instanceof String name) {
-            return name;
+        return null;
+    }
+
+    private Long resolveCurrentUserId(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Authentication required");
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object uid = map.get("userId");
+            if (uid instanceof Number n) return n.longValue();
+        }
+        return null;
+    }
+
+    private String resolveCurrentUserName(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object name = map.get("fullName");
+            if (name instanceof String s) return s;
         }
         return null;
     }
@@ -331,6 +368,7 @@ public class BookingService {
                 .id(booking.getId())
                 .userEmail(booking.getUserEmail())
                 .studentId(booking.getStudentId())
+                .studentName(booking.getUserName())
                 .seatId(booking.getSeat().getId())
                 .seatNumber(booking.getSeat().getSeatNumber())
                 .zone(booking.getSeat().getZone())

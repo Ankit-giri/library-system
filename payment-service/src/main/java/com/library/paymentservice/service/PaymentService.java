@@ -1,18 +1,28 @@
 package com.library.paymentservice.service;
 
+import com.library.paymentservice.dto.CreateOrderResponse;
+import com.library.paymentservice.dto.MembershipPlanDTO;
 import com.library.paymentservice.dto.MembershipStatusDTO;
 import com.library.paymentservice.dto.PaymentConfirmationRequest;
-import com.library.paymentservice.dto.PaymentDTO;
 import com.library.paymentservice.dto.PaymentHistoryDTO;
 import com.library.paymentservice.dto.PaymentSessionDTO;
 import com.library.paymentservice.dto.PaymentStatsDTO;
 import com.library.paymentservice.dto.PaymentsResponseDTO;
 import com.library.paymentservice.dto.PendingRenewalsDTO;
 import com.library.paymentservice.dto.RevenueReportDTO;
+import com.library.paymentservice.dto.VerifyPaymentRequest;
+import com.library.paymentservice.dto.VerifyPaymentResponse;
 import com.library.paymentservice.entity.MembershipFeeEntity;
-import com.library.paymentservice.entity.PaymentPlan;
+import com.library.paymentservice.entity.MembershipPlanEntity;
 import com.library.paymentservice.repository.MembershipFeeRepository;
+import com.library.paymentservice.repository.MembershipPlanRepository;
+import com.razorpay.Order;
+import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -24,43 +34,129 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PaymentService {
 
+    @Value("${razorpay.key.id}")
+    private String razorpayKeyId;
+
+    @Value("${razorpay.key.secret}")
+    private String razorpayKeySecret;
+
     private final MembershipFeeRepository membershipFeeRepository;
+    private final MembershipPlanRepository planRepository;
     private final PaymentNotificationService notificationService;
     private final Map<String, PaymentSession> sessions = new ConcurrentHashMap<>();
     private final Random random = new Random();
 
     public PaymentService(MembershipFeeRepository membershipFeeRepository,
+            MembershipPlanRepository planRepository,
             PaymentNotificationService notificationService) {
         this.membershipFeeRepository = membershipFeeRepository;
+        this.planRepository = planRepository;
         this.notificationService = notificationService;
     }
 
-    public List<PaymentDTO> getPlans() {
-        return List.of(PaymentPlan.values()).stream()
-                .map(PaymentPlan::toDto)
+    public CreateOrderResponse createOrder(String planType, String studentId) {
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(planType)
+                .filter(MembershipPlanEntity::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plan: " + planType));
+        try {
+            RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+            JSONObject options = new JSONObject();
+            options.put("amount", plan.getPrice().multiply(BigDecimal.valueOf(100)).intValue());
+            options.put("currency", "INR");
+            options.put("receipt", "rcpt_" + studentId + "_" + System.currentTimeMillis());
+            Order order = client.orders.create(options);
+            return CreateOrderResponse.builder()
+                    .orderId(order.get("id"))
+                    .amount(order.get("amount"))
+                    .currency("INR")
+                    .keyId(razorpayKeyId)
+                    .build();
+        } catch (RazorpayException e) {
+            throw new RuntimeException("Failed to create Razorpay order: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public VerifyPaymentResponse verifyPayment(VerifyPaymentRequest req, String studentId) {
+        if (!isValidSignature(req.getRazorpayOrderId(), req.getRazorpayPaymentId(), req.getRazorpaySignature())) {
+            return VerifyPaymentResponse.builder()
+                    .success(false)
+                    .message("Invalid payment signature")
+                    .build();
+        }
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(req.getPlanType())
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + req.getPlanType()));
+        MembershipStatusDTO currentStatus = getMembershipStatus(studentId);
+        LocalDate baseDate = currentStatus.isActive() && currentStatus.getExpiryDate() != null
+                ? currentStatus.getExpiryDate()
+                : LocalDate.now();
+        LocalDate expiry = baseDate.plusDays(plan.getDurationDays());
+        MembershipFeeEntity fee = MembershipFeeEntity.builder()
+                .studentId(studentId)
+                .plan(plan.getName())
+                .amount(plan.getPrice())
+                .transactionId(req.getRazorpayPaymentId())
+                .razorpayOrderId(req.getRazorpayOrderId())
+                .razorpayPaymentId(req.getRazorpayPaymentId())
+                .razorpaySignature(req.getRazorpaySignature())
+                .expiryDate(expiry)
+                .build();
+        membershipFeeRepository.save(fee);
+        notificationService.sendMembershipPaymentNotification(fee);
+        return VerifyPaymentResponse.builder()
+                .success(true)
+                .transactionId(req.getRazorpayPaymentId())
+                .expiryDate(expiry.toString())
+                .message("Payment verified successfully")
+                .build();
+    }
+
+    private boolean isValidSignature(String orderId, String paymentId, String signature) {
+        try {
+            String payload = orderId + "|" + paymentId;
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(razorpayKeySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString().equals(signature);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Signature verification error", e);
+        }
+    }
+
+    public List<MembershipPlanDTO> getPlans() {
+        return planRepository.findByActiveTrueOrderByPriceAsc().stream()
+                .map(this::toPlanDTO)
                 .collect(Collectors.toList());
     }
 
     public PaymentSessionDTO initiatePayment(String planName, String studentId) {
-        PaymentPlan plan = parsePlan(planName);
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(planName)
+                .filter(MembershipPlanEntity::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid payment plan: " + planName));
         String sessionId = generateSessionId();
         PaymentSession session = new PaymentSession();
         session.setSessionId(sessionId);
-        session.setPlan(plan.name());
+        session.setPlan(plan.getName());
         session.setStudentId(studentId);
         session.setExpiresAt(System.currentTimeMillis() + 300_000);
         sessions.put(sessionId, session);
 
         return PaymentSessionDTO.builder()
                 .sessionId(sessionId)
-                .amount(plan.getPrice())
-                .plan(plan.name())
+                .amount(plan.getPrice().intValue())
+                .plan(plan.getName())
                 .expiresIn(300)
                 .build();
     }
@@ -77,7 +173,8 @@ public class PaymentService {
             throw new IllegalStateException("Payment failed during simulation");
         }
 
-        PaymentPlan plan = parsePlan(session.plan);
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(session.plan)
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + session.plan));
         MembershipStatusDTO currentStatus = getMembershipStatus(session.studentId);
         LocalDate baseDate = currentStatus.isActive() && currentStatus.getExpiryDate() != null
                 ? currentStatus.getExpiryDate()
@@ -87,8 +184,8 @@ public class PaymentService {
 
         MembershipFeeEntity fee = MembershipFeeEntity.builder()
                 .studentId(session.studentId)
-                .plan(plan.name())
-                .amount(BigDecimal.valueOf(plan.getPrice()))
+                .plan(plan.getName())
+                .amount(plan.getPrice())
                 .transactionId(txnId)
                 .cardLastFour(request.getCardLastFour())
                 .expiryDate(expiry)
@@ -193,14 +290,21 @@ public class PaymentService {
                 .build();
     }
 
-    public RevenueReportDTO getRevenueReport(String month) {
-        Map<String, BigDecimal> byPlan = membershipFeeRepository.findAll().stream()
-                .filter(entity -> month == null || getMonthKey(entity).equals(month))
+    public RevenueReportDTO getRevenueReport(String month, LocalDate from, LocalDate to) {
+        List<MembershipFeeEntity> filtered = membershipFeeRepository.findAll().stream()
+                .filter(entity -> {
+                    LocalDate paidDate = entity.getPaidAt().toLocalDate();
+                    if (from != null && to != null) {
+                        return !paidDate.isBefore(from) && !paidDate.isAfter(to);
+                    }
+                    return month == null || getMonthKey(entity).equals(month);
+                })
+                .toList();
+        Map<String, BigDecimal> byPlan = filtered.stream()
                 .collect(Collectors.groupingBy(MembershipFeeEntity::getPlan,
                         Collectors.mapping(MembershipFeeEntity::getAmount,
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
-        Map<String, BigDecimal> dailyBreakdown = membershipFeeRepository.findAll().stream()
-                .filter(entity -> month == null || getMonthKey(entity).equals(month))
+        Map<String, BigDecimal> dailyBreakdown = filtered.stream()
                 .collect(Collectors.groupingBy(entity -> entity.getPaidAt().toLocalDate().toString(),
                         Collectors.mapping(MembershipFeeEntity::getAmount,
                                 Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
@@ -210,6 +314,7 @@ public class PaymentService {
         return RevenueReportDTO.builder()
                 .month(month)
                 .totalRevenue(totalRevenue)
+                .totalTransactions(filtered.size())
                 .revenueByPlan(byPlan)
                 .dailyBreakdown(dailyBreakdown)
                 .build();
@@ -246,16 +351,24 @@ public class PaymentService {
         return String.format("TXN-%d-%06d", System.currentTimeMillis(), random.nextInt(1_000_000));
     }
 
-    public LocalDate calculateExpiryDate(PaymentPlan plan) {
-        return LocalDate.now().plusDays(plan.getDurationDays());
-    }
-
-    private PaymentPlan parsePlan(String planName) {
-        try {
-            return PaymentPlan.valueOf(planName.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid payment plan: " + planName);
-        }
+    private MembershipPlanDTO toPlanDTO(MembershipPlanEntity e) {
+        List<String> features = (e.getFeaturesCsv() == null || e.getFeaturesCsv().isBlank())
+                ? List.of()
+                : java.util.Arrays.stream(e.getFeaturesCsv().split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+        return MembershipPlanDTO.builder()
+                .id(e.getId())
+                .name(e.getName())
+                .displayName(e.getDisplayName())
+                .price(e.getPrice())
+                .durationDays(e.getDurationDays())
+                .description(e.getDescription())
+                .features(features)
+                .badgeText(e.getBadgeText())
+                .featured(e.isFeatured())
+                .active(e.isActive())
+                .build();
     }
 
     private static class PaymentSession {

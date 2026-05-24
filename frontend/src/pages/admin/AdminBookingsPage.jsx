@@ -63,7 +63,7 @@ function CancelModal({ booking, onConfirm, onClose, loading }) {
                     <div className="ab-cancel-icon">⚠️</div>
                     <p className="ab-modal__text">
                         Cancel booking <strong>#{booking.id}</strong> for{' '}
-                        <strong>{booking.studentName}</strong>?
+                        <strong>{booking.studentName ?? booking.studentId ?? booking.userEmail}</strong>?
                     </p>
                     <div className="ab-cancel-details">
                         <div className="ab-cancel-details__row">
@@ -92,6 +92,20 @@ function CancelModal({ booking, onConfirm, onClose, loading }) {
 
 /* ── Detail modal ────────────────────────── */
 function DetailModal({ booking, onClose }) {
+    const [studentName, setStudentName] = useState(booking.studentName ?? null);
+
+    useEffect(() => {
+        if (studentName) return;
+        const query = booking.studentId || booking.userEmail;
+        if (!query) return;
+        api.get('/api/admin/students', { params: { search: query, size: 1 } })
+            .then(r => {
+                const hit = (r.data?.content ?? r.data ?? [])[0];
+                if (hit?.fullName) setStudentName(hit.fullName);
+            })
+            .catch(() => {});
+    }, [booking.studentId, booking.userEmail]);
+
     return (
         <div className="ab-modal-backdrop" onClick={onClose}>
             <div className="ab-modal ab-modal--md" onClick={e => e.stopPropagation()}>
@@ -108,13 +122,13 @@ function DetailModal({ booking, onClose }) {
                         <div className="ab-detail-section">
                             <p className="ab-detail-section__title">Student</p>
                             <div className="ab-detail-item">
-                                <span>Name</span><strong>{booking.studentName}</strong>
+                                <span>Name</span><strong>{studentName ?? '—'}</strong>
                             </div>
                             <div className="ab-detail-item">
-                                <span>Student ID</span><strong>{booking.studentId}</strong>
+                                <span>Student ID</span><strong>{booking.studentId ?? '—'}</strong>
                             </div>
                             <div className="ab-detail-item">
-                                <span>Email</span><strong>{booking.studentEmail ?? '—'}</strong>
+                                <span>Email</span><strong>{booking.userEmail ?? '—'}</strong>
                             </div>
                         </div>
                         <div className="ab-detail-section">
@@ -333,8 +347,8 @@ export default function AdminBookingsPage() {
                                         <tr key={b.id}>
                                             <td className="ab-cell-num">{page * PAGE_SIZE + idx + 1}</td>
                                             <td>
-                                                <div className="ab-cell-primary">{b.studentName}</div>
-                                                <div className="ab-cell-sub">{b.studentId}</div>
+                                                <div className="ab-cell-primary">{b.studentName ?? b.studentId}</div>
+                                                <div className="ab-cell-sub">{b.userEmail}</div>
                                             </td>
                                             <td>
                                                 <div className="ab-cell-primary">{b.seatNumber}</div>

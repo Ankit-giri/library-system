@@ -55,6 +55,31 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Map<String, String>>> forgotPassword(
+            @RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String token = authService.forgotPassword(email);
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(true)
+                .message("Password reset instructions sent to your email.")
+                .data(Map.of("devToken", token)) // visible in dev so user can test without real email
+                .timestamp(Instant.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody Map<String, String> body) {
+        authService.resetPassword(body.get("token"), body.get("newPassword"));
+        ApiResponse<Object> response = ApiResponse.builder()
+                .success(true)
+                .message("Password reset successfully. You can now log in.")
+                .timestamp(Instant.now())
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(HttpServletRequest request) {
         String token = extractToken(request);

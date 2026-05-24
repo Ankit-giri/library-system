@@ -60,7 +60,7 @@
     cursor: pointer;
     transition: var(--transition-fast);
 }
-.ar-type-tab:hover {
+.ar-type-tab:not(.ar-type-tab--active):hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
 }

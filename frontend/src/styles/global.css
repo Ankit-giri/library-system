@@ -15,7 +15,7 @@ body {
 }
 
 body::-webkit-scrollbar {
-    width: 10px;
+    width: 6px;
 }
 
 body::-webkit-scrollbar-track {
@@ -23,7 +23,7 @@ body::-webkit-scrollbar-track {
 }
 
 body::-webkit-scrollbar-thumb {
-    background: var(--color-primary);
+    background: var(--color-border);
     border-radius: 999px;
 }
 
@@ -67,7 +67,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .skeleton {
-    background: #e5e5e5;
+    background: var(--color-border);
     border-radius: var(--radius-sm);
     position: relative;
     overflow: hidden;
@@ -108,4 +108,322 @@ body::-webkit-scrollbar-thumb {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Fixes hardcoded colors across all components
+══════════════════════════════════════════════════ */
+[data-theme="dark"] {
+
+    /* ── Bootstrap root variable overrides ── */
+    --bs-body-bg: var(--color-bg);
+    --bs-body-color: var(--color-text-primary);
+    --bs-border-color: var(--color-border);
+    --bs-secondary-color: var(--color-text-secondary);
+
+    /* ── Navbar ── */
+    .lib-navbar {
+        background: rgba(28, 28, 30, 0.85);
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .lib-navbar--scrolled {
+        background: rgba(28, 28, 30, 0.96);
+    }
+    .lib-nav-link:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+    .lib-bell:hover,
+    .lib-toggler:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+    .lib-badge {
+        border-color: var(--color-surface);
+    }
+    .lib-dropdown {
+        border-color: var(--color-border);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .lib-dropdown__item:hover {
+        background: rgba(255, 255, 255, 0.07);
+    }
+
+    /* ── Admin sidebar ── */
+    .al-profile-menu__item--danger:hover { background: rgba(255,59,48,0.12); }
+    .al-logout-btn:hover { background: rgba(255,59,48,0.12); }
+
+    /* ── Cards / surfaces ── */
+    .sb-card, .fr-card, .sb-modal, .fr-pay-modal,
+    .ad-card, .ad-stat-card {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+    }
+
+    /* ── Seat booking ── */
+    .sb-slot { background: var(--color-surface); border-color: var(--color-border); }
+    .sb-slot:hover { background: var(--color-bg); }
+    .sb-zone-btn { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-secondary); }
+    .sb-zone-btn:hover { background: var(--color-bg); }
+    .sb-date-input { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .sb-date-input:focus { border-color: var(--color-primary); }
+    .sb-seat--available { background: var(--color-surface); border-color: var(--color-border); }
+    .sb-seat--skeleton { background: var(--color-border); }
+    .sb-btn--ghost { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-primary); }
+
+    /* ── Admin dashboard stat icon wraps ── */
+    .ad-stat-card--blue  .ad-stat-card__icon-wrap { background: rgba(0,113,227,0.15); }
+    .ad-stat-card--green .ad-stat-card__icon-wrap { background: rgba(0,200,150,0.15); }
+    .ad-stat-card--teal  .ad-stat-card__icon-wrap { background: rgba(13,148,136,0.15); }
+    .ad-stat-card--purple .ad-stat-card__icon-wrap { background: rgba(124,58,237,0.15); }
+
+    /* ── Admin dashboard badges ── */
+    .ad-badge--confirmed { background: rgba(5,150,105,0.18); }
+    .ad-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .ad-badge--cancelled { background: rgba(255,59,48,0.15); }
+    .ad-badge--pending   { background: rgba(217,119,6,0.18); color: #fbbf24; }
+
+    /* ── Admin error bar ── */
+    .ad-error-bar { background: rgba(255,59,48,0.12); border-color: rgba(255,59,48,0.25); }
+
+    /* ── Tables ── */
+    /*
+     * Bootstrap 5 uses --bs-table-bg and a box-shadow inset trick on every cell.
+     * Setting background-color alone is not enough; we must override the CSS variable.
+     * Also fix rgba(0,0,0,...) cell borders which become invisible on dark backgrounds.
+     */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--color-text-primary);
+        --bs-table-border-color: var(--color-border);
+        --bs-table-striped-bg: rgba(255,255,255,0.03);
+        --bs-table-striped-color: var(--color-text-primary);
+        --bs-table-hover-bg: rgba(255,255,255,0.05);
+        --bs-table-hover-color: var(--color-text-primary);
+        --bs-table-active-bg: rgba(255,255,255,0.06);
+        color: var(--color-text-primary);
+        border-color: var(--color-border);
+    }
+
+    /* thead headers */
+    .table thead th,
+    .ad-table thead th,
+    .as-table thead th,
+    .ab-table thead th,
+    .ar-table thead th,
+    .fr-table thead th {
+        background: var(--color-bg) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-muted);
+    }
+
+    /* body cells — replace hardcoded rgba(0,0,0,...) borders */
+    .table td, .table th,
+    .ad-table td, .ad-table th,
+    .as-table td, .as-table th,
+    .ab-table td, .ab-table th,
+    .ar-table td, .ar-table th,
+    .fr-table td, .fr-table th {
+        border-color: var(--color-border) !important;
+        color: var(--color-text-primary);
+    }
+
+    /* row hover */
+    .table-hover tbody tr:hover > *,
+    .ad-table tbody tr:hover td,
+    .as-table tbody tr:hover td,
+    .ab-table tbody tr:hover td,
+    .ar-table tbody tr:hover td,
+    .fr-table tbody tr:hover td {
+        background: rgba(255,255,255,0.05) !important;
+        --bs-table-bg: rgba(255,255,255,0.05);
+    }
+
+    /* table-responsive wrapper background */
+    .table-responsive {
+        background: var(--color-surface);
+    }
+
+    /* ── Inputs & forms ── */
+    input, select, textarea {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    input:focus, select:focus, textarea:focus {
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+    input::placeholder, textarea::placeholder { color: var(--color-text-muted); }
+
+    /* ── Bootstrap overrides ── */
+    .modal-content { background: var(--color-surface); border-color: var(--color-border); }
+    .modal-header { border-color: var(--color-border); }
+    .modal-footer { border-color: var(--color-border); }
+    .dropdown-menu { background: var(--color-surface); border-color: var(--color-border); }
+    .dropdown-item { color: var(--color-text-primary); }
+    .dropdown-item:hover { background: var(--color-bg); }
+    .list-group-item { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .form-control, .form-select {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .form-control:focus, .form-select:focus {
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+    .form-control::placeholder { color: var(--color-text-muted); }
+
+    /* ── Fee Renewal ── */
+    .fr-plan { background: var(--color-surface); border-color: var(--color-border); }
+    .fr-plan__btn { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-primary); }
+    .fr-field__input { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-primary); }
+    .fr-card-wrap { background: var(--color-surface); }
+    .fr-pay-summary { background: var(--color-bg); }
+
+    /* ── Admin bookings — action buttons & status badges ── */
+    .ab-action-btn--cancel { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+    .ab-action-btn--cancel:hover { background: var(--color-danger); color: #fff; }
+    .ab-badge--confirmed { background: rgba(5,150,105,0.18); color: #34d399; }
+    .ab-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .ab-badge--cancelled { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+    .ab-badge--pending   { background: rgba(217,119,6,0.18);  color: #fbbf24; }
+
+    /* ── Admin pages ── */
+    .ab-filter-card, .as-filter-bar, .ar-filter-card, .apl-modal,
+    .ar-card, .ab-table-card, .ab-card, .as-card, .ar-table-card { background: var(--color-surface); border-color: var(--color-border); }
+    .ab-filter input, .ab-filter select,
+    .as-filter-bar input, .as-filter-bar select,
+    .ar-filter-card input, .ar-filter-card select {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .apl-input, .apl-textarea {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .apl-card { background: var(--color-surface); border-color: var(--color-border); }
+    .apl-backdrop { background: rgba(0,0,0,0.6); }
+
+    /* ── Skeleton shimmer ── */
+    .skeleton::after,
+    .ad-skel::after,
+    .fr-skel::after,
+    .sb-seat--skeleton::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* ── Students page — action buttons ── */
+    .as-action-btn--deactivate {
+        background: rgba(217,119,6,0.18);
+        color: #fbbf24;
+    }
+    .as-action-btn--deactivate:not(:disabled):hover {
+        background: #d97706;
+        color: #fff;
+    }
+    .as-action-btn--delete {
+        background: rgba(255,59,48,0.15);
+        color: var(--color-danger);
+    }
+    .as-action-btn--delete:not(:disabled):hover {
+        background: var(--color-danger);
+        color: #fff;
+    }
+    .as-action-btn--activate {
+        background: rgba(5,150,105,0.18);
+        color: #34d399;
+    }
+    .as-action-btn--activate:not(:disabled):hover {
+        background: #059669;
+        color: #fff;
+    }
+
+    /* ── Students page — membership chips ── */
+    .as-chip--active   { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-chip--warn     { background: rgba(217,119,6,0.18);  color: #fbbf24; }
+    .as-chip--expired  { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+
+    /* ── Students page — badges inside detail modal ── */
+    .as-badge--confirmed { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .as-badge--cancelled { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+    .as-badge--success   { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-badge--failed    { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+
+    /* ── Students page — error bar ── */
+    .as-error-bar { background: rgba(255,59,48,0.12); border-color: rgba(255,59,48,0.25); }
+
+    /* ── Students page — skeleton ── */
+    .as-skel {
+        background: linear-gradient(90deg, var(--color-border) 25%, rgba(255,255,255,0.06) 50%, var(--color-border) 75%);
+    }
+
+    /* ── Plans page — "Best Value" badge ── */
+    .apl-card__badge-text {
+        background: rgba(255,188,68,0.2);
+        color: #fbbf24;
+    }
+
+    /* ── Plans page — featured card ── */
+    .apl-card--featured { background: rgba(0,113,227,0.06); }
+
+    /* ── Plans page — action button hover ── */
+    .apl-action-btn--deactivate { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+
+    /* ── Student dashboard — welcome banner ── */
+    .db-welcome {
+        background: linear-gradient(120deg, rgba(0,113,227,0.1) 0%, rgba(0,113,227,0.04) 100%);
+        border-color: rgba(0,113,227,0.18);
+    }
+    .db-welcome--warn {
+        background: linear-gradient(120deg, rgba(255,149,0,0.1) 0%, rgba(255,149,0,0.04) 100%);
+        border-color: rgba(255,149,0,0.2);
+    }
+
+    /* ── Student dashboard — skeleton ── */
+    .db-skel {
+        background: var(--color-border);
+    }
+    .db-skel::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* ── Student dashboard — quick action cards ── */
+    .db-quick-action {
+        background: var(--color-surface);
+        border-color: var(--color-border);
+    }
+
+    /* ── Student dashboard — zone chip & badge ── */
+    .db-zone-chip { background: rgba(0,113,227,0.15); }
+    .db-badge--grey { background: rgba(255,255,255,0.08); color: var(--color-text-secondary); }
+
+    /* ── Seat booking — confirmation bar ── */
+    .sb-bar__inner { background: var(--color-surface); }
+
+    /* ── Auth pages (login / register) ── */
+    .auth-page { background: var(--color-bg); }
+    .auth-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .auth-input {
+        background: var(--color-bg);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .auth-input:focus {
+        background: var(--color-bg);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+    }
+    .auth-input--error { background: rgba(255,59,48,0.06); }
 }
