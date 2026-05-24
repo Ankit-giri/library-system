@@ -46,8 +46,15 @@ function calcNewExpiry(currentExpiry, planDays, isExpired) {
     return base.toISOString().split('T')[0];
 }
 
-function formatCard(v) {
-    return v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})(?=.)/g, '$1 ');
+function loadRazorpayScript() {
+    return new Promise(resolve => {
+        if (window.Razorpay) { resolve(true); return; }
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.body.appendChild(s);
+    });
 }
 
 function progressColor(pct) {
@@ -132,53 +139,80 @@ function StatusSkeleton() {
 ════════════════════════════════════════════════ */
 function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
     const { currentUser } = useAuth();
-    const [step, setStep]             = useState('form');
-    const [cardName, setCardName]     = useState('');
-    const [cardNum, setCardNum]       = useState('');
-    const [cardErr, setCardErr]       = useState('');
-    const [simulate, setSimulate]     = useState(false);
-    const [successData, setSuccess]   = useState(null);
+    const [step, setStep]       = useState('form');
+    const [paying, setPaying]   = useState(false);
+    const [successData, setSuccess] = useState(null);
 
     const isExpired  = membership?.status === 'EXPIRED';
     const newExpiry  = calcNewExpiry(membership?.expiryDate, plan.days, isExpired);
     const canClose   = step !== 'processing';
+    const studentId  = currentUser?.studentId;
 
     const handlePay = async () => {
-        const digits = cardNum.replace(/\s/g, '');
-        if (digits.length < 16) { setCardErr('Enter a valid 16-digit card number.'); return; }
-        if (!cardName.trim())   { setCardErr('Enter the cardholder name.'); return; }
-        setCardErr('');
-        setStep('processing');
-
-        /* Demo failure path — skip real API */
-        if (simulate) {
-            await new Promise(r => setTimeout(r, 1600));
-            setStep('failure');
+        setPaying(true);
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+            toast.error('Failed to load payment gateway. Check your internet connection.');
+            setPaying(false);
             return;
         }
-
-        const last4 = digits.slice(-4);
-        const studentId = currentUser?.studentId;
         try {
-            // ISSUE-21 fix: plan as query param + X-Student-Id header; no request body
-            const { data: init } = await api.post(
-                `/api/payments/initiate?plan=${plan.id}`,
-                null,
+            const { data: order } = await api.post(
+                '/api/payments/create-order',
+                { planType: plan.id },
                 { headers: { 'X-Student-Id': studentId } }
             );
-            // ISSUE-22 fix: correct field names: sessionId, cardLastFour, simulateSuccess
-            await api.post('/api/payments/confirm', {
-                sessionId:       init.sessionId,
-                cardLastFour:    last4,
-                simulateSuccess: !simulate,
-            });
-            // ISSUE-23 fix: confirm returns 200 void — compute expiry locally
-            const resolvedExpiry = calcNewExpiry(membership?.expiryDate, plan.days, isExpired);
-            const txnId = `TXN${Date.now()}`;
-            setSuccess({ newExpiryDate: resolvedExpiry, transactionId: txnId, last4 });
-            onMembershipUpdate({ plan: plan.id, expiryDate: resolvedExpiry, days: plan.days });
-            setStep('success');
+            setPaying(false);
+
+            const options = {
+                key:         order.keyId,
+                amount:      order.amount,
+                currency:    order.currency,
+                order_id:    order.orderId,
+                name:        'Library Management System',
+                description: `${plan.title} Membership`,
+                prefill: {
+                    name:  currentUser?.fullName ?? '',
+                    email: currentUser?.email ?? '',
+                },
+                handler: async (response) => {
+                    setStep('processing');
+                    try {
+                        const { data: result } = await api.post(
+                            '/api/payments/verify',
+                            {
+                                razorpayOrderId:   response.razorpay_order_id,
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpaySignature: response.razorpay_signature,
+                                planType:          plan.id,
+                            },
+                            { headers: { 'X-Student-Id': studentId } }
+                        );
+                        if (result.success) {
+                            setSuccess({
+                                newExpiryDate: result.expiryDate,
+                                transactionId: result.transactionId,
+                            });
+                            onMembershipUpdate({ plan: plan.id, expiryDate: result.expiryDate, days: plan.days });
+                            setStep('success');
+                        } else {
+                            setStep('failure');
+                        }
+                    } catch {
+                        setStep('failure');
+                    }
+                },
+                modal: {
+                    ondismiss: () => { setPaying(false); },
+                },
+                theme: { color: '#0071e3' },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', () => setStep('failure'));
+            rzp.open();
         } catch {
+            setPaying(false);
             setStep('failure');
         }
     };
@@ -223,51 +257,11 @@ function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
                             ))}
                         </div>
 
-                        <div className="fr-field">
-                            <label className="fr-field__label" htmlFor="fr-card-name">Cardholder Name</label>
-                            <input
-                                id="fr-card-name"
-                                type="text"
-                                className="fr-field__input"
-                                placeholder="Name on card"
-                                value={cardName}
-                                onChange={e => { setCardName(e.target.value); setCardErr(''); }}
-                                autoComplete="cc-name"
-                            />
-                        </div>
-
-                        <div className="fr-field">
-                            <label className="fr-field__label" htmlFor="fr-card-num">Card Number</label>
-                            <div className="fr-card-wrap">
-                                <input
-                                    id="fr-card-num"
-                                    type="text"
-                                    inputMode="numeric"
-                                    className={`fr-field__input${cardErr ? ' fr-input--err' : ''}`}
-                                    placeholder="0000 0000 0000 0000"
-                                    value={cardNum}
-                                    onChange={e => { setCardNum(formatCard(e.target.value)); setCardErr(''); }}
-                                    maxLength={19}
-                                    autoComplete="cc-number"
-                                />
-                                <span className="fr-card-emoji" aria-hidden="true">💳</span>
-                            </div>
-                            {cardErr && <span className="fr-field-err">{cardErr}</span>}
-                        </div>
-
-                        <label className="fr-demo-row">
-                            <input
-                                type="checkbox"
-                                className="fr-demo-check"
-                                checked={simulate}
-                                onChange={e => setSimulate(e.target.checked)}
-                            />
-                            <span className="fr-demo-text">Simulate payment failure</span>
-                            <span className="fr-demo-tag">DEMO</span>
-                        </label>
-
-                        <button className="fr-pay-btn" onClick={handlePay}>
-                            Pay {plan.priceLabel}
+                        <button className="fr-pay-btn" onClick={handlePay} disabled={paying}>
+                            {paying
+                                ? <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                                : null}
+                            {paying ? 'Opening payment…' : `Pay ${plan.priceLabel}`}
                         </button>
                     </>
                 )}
@@ -278,9 +272,9 @@ function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
                         <span
                             className="spinner-border text-primary fr-processing__spin"
                             role="status"
-                            aria-label="Processing payment"
+                            aria-label="Verifying payment"
                         />
-                        <p className="fr-processing__label">Processing payment…</p>
+                        <p className="fr-processing__label">Verifying payment…</p>
                         <p className="fr-processing__sub">Please do not close this window.</p>
                     </div>
                 )}
@@ -298,7 +292,6 @@ function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
                                 ['Plan',           `${plan.title} · ${plan.days} days`],
                                 ['New Expiry',     formatDate(successData.newExpiryDate)],
                                 ['Amount Paid',    plan.priceLabel],
-                                ['Card',           `•••• •••• •••• ${successData.last4}`],
                                 ['Transaction ID', successData.transactionId],
                             ].map(([lbl, val]) => (
                                 <div className="fr-success-rows__row" key={lbl}>
@@ -322,9 +315,7 @@ function PaymentModal({ plan, membership, onClose, onMembershipUpdate }) {
                         <div className="fr-fail-icon" aria-hidden="true">✕</div>
                         <h3 className="fr-failure__title">Payment Failed</h3>
                         <p className="fr-failure__sub">
-                            {simulate
-                                ? 'This was a simulated failure (demo mode).'
-                                : 'Your payment could not be processed. Check your card details and try again.'}
+                            Your payment could not be processed. Please try again.
                         </p>
                         <div className="fr-failure__actions">
                             <button className="fr-btn-ghost" onClick={onClose}>Cancel</button>

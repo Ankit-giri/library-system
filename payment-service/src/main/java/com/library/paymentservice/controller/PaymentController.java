@@ -1,5 +1,7 @@
 package com.library.paymentservice.controller;
 
+import com.library.paymentservice.dto.CreateOrderRequest;
+import com.library.paymentservice.dto.CreateOrderResponse;
 import com.library.paymentservice.dto.MembershipPlanDTO;
 import com.library.paymentservice.dto.MembershipStatusDTO;
 import com.library.paymentservice.dto.PaymentConfirmationRequest;
@@ -8,6 +10,8 @@ import com.library.paymentservice.dto.PaymentSessionDTO;
 import com.library.paymentservice.dto.PaymentStatsDTO;
 import com.library.paymentservice.dto.PaymentsResponseDTO;
 import com.library.paymentservice.dto.PendingRenewalsDTO;
+import com.library.paymentservice.dto.VerifyPaymentRequest;
+import com.library.paymentservice.dto.VerifyPaymentResponse;
 import com.library.paymentservice.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -93,5 +97,22 @@ public class PaymentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentStatsDTO> getRevenueStats() {
         return ResponseEntity.ok(paymentService.getRevenueStats());
+    }
+
+    @PostMapping("/create-order")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<CreateOrderResponse> createOrder(
+            @Valid @RequestBody CreateOrderRequest request,
+            @RequestHeader("X-Student-Id") String studentId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(paymentService.createOrder(request.getPlanType(), studentId));
+    }
+
+    @PostMapping("/verify")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<VerifyPaymentResponse> verifyPayment(
+            @Valid @RequestBody VerifyPaymentRequest request,
+            @RequestHeader("X-Student-Id") String studentId) {
+        return ResponseEntity.ok(paymentService.verifyPayment(request, studentId));
     }
 }

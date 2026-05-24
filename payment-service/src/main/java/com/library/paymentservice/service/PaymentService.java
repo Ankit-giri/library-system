@@ -1,21 +1,28 @@
 package com.library.paymentservice.service;
 
+import com.library.paymentservice.dto.CreateOrderResponse;
 import com.library.paymentservice.dto.MembershipPlanDTO;
 import com.library.paymentservice.dto.MembershipStatusDTO;
 import com.library.paymentservice.dto.PaymentConfirmationRequest;
-import com.library.paymentservice.dto.PaymentDTO;
 import com.library.paymentservice.dto.PaymentHistoryDTO;
 import com.library.paymentservice.dto.PaymentSessionDTO;
 import com.library.paymentservice.dto.PaymentStatsDTO;
 import com.library.paymentservice.dto.PaymentsResponseDTO;
 import com.library.paymentservice.dto.PendingRenewalsDTO;
 import com.library.paymentservice.dto.RevenueReportDTO;
+import com.library.paymentservice.dto.VerifyPaymentRequest;
+import com.library.paymentservice.dto.VerifyPaymentResponse;
 import com.library.paymentservice.entity.MembershipFeeEntity;
 import com.library.paymentservice.entity.MembershipPlanEntity;
-import com.library.paymentservice.entity.PaymentPlan;
 import com.library.paymentservice.repository.MembershipFeeRepository;
 import com.library.paymentservice.repository.MembershipPlanRepository;
+import com.razorpay.Order;
+import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -27,11 +34,21 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PaymentService {
+
+    @Value("${razorpay.key.id}")
+    private String razorpayKeyId;
+
+    @Value("${razorpay.key.secret}")
+    private String razorpayKeySecret;
 
     private final MembershipFeeRepository membershipFeeRepository;
     private final MembershipPlanRepository planRepository;
@@ -45,6 +62,77 @@ public class PaymentService {
         this.membershipFeeRepository = membershipFeeRepository;
         this.planRepository = planRepository;
         this.notificationService = notificationService;
+    }
+
+    public CreateOrderResponse createOrder(String planType, String studentId) {
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(planType)
+                .filter(MembershipPlanEntity::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid plan: " + planType));
+        try {
+            RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+            JSONObject options = new JSONObject();
+            options.put("amount", plan.getPrice().multiply(BigDecimal.valueOf(100)).intValue());
+            options.put("currency", "INR");
+            options.put("receipt", "rcpt_" + studentId + "_" + System.currentTimeMillis());
+            Order order = client.orders.create(options);
+            return CreateOrderResponse.builder()
+                    .orderId(order.get("id"))
+                    .amount(order.get("amount"))
+                    .currency("INR")
+                    .keyId(razorpayKeyId)
+                    .build();
+        } catch (RazorpayException e) {
+            throw new RuntimeException("Failed to create Razorpay order: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
+    public VerifyPaymentResponse verifyPayment(VerifyPaymentRequest req, String studentId) {
+        if (!isValidSignature(req.getRazorpayOrderId(), req.getRazorpayPaymentId(), req.getRazorpaySignature())) {
+            return VerifyPaymentResponse.builder()
+                    .success(false)
+                    .message("Invalid payment signature")
+                    .build();
+        }
+        MembershipPlanEntity plan = planRepository.findByNameIgnoreCase(req.getPlanType())
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + req.getPlanType()));
+        MembershipStatusDTO currentStatus = getMembershipStatus(studentId);
+        LocalDate baseDate = currentStatus.isActive() && currentStatus.getExpiryDate() != null
+                ? currentStatus.getExpiryDate()
+                : LocalDate.now();
+        LocalDate expiry = baseDate.plusDays(plan.getDurationDays());
+        MembershipFeeEntity fee = MembershipFeeEntity.builder()
+                .studentId(studentId)
+                .plan(plan.getName())
+                .amount(plan.getPrice())
+                .transactionId(req.getRazorpayPaymentId())
+                .razorpayOrderId(req.getRazorpayOrderId())
+                .razorpayPaymentId(req.getRazorpayPaymentId())
+                .razorpaySignature(req.getRazorpaySignature())
+                .expiryDate(expiry)
+                .build();
+        membershipFeeRepository.save(fee);
+        notificationService.sendMembershipPaymentNotification(fee);
+        return VerifyPaymentResponse.builder()
+                .success(true)
+                .transactionId(req.getRazorpayPaymentId())
+                .expiryDate(expiry.toString())
+                .message("Payment verified successfully")
+                .build();
+    }
+
+    private boolean isValidSignature(String orderId, String paymentId, String signature) {
+        try {
+            String payload = orderId + "|" + paymentId;
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(razorpayKeySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString().equals(signature);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Signature verification error", e);
+        }
     }
 
     public List<MembershipPlanDTO> getPlans() {
