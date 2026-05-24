@@ -245,6 +245,4 @@ library-system/
 ├── admin-service/        Placeholder — admin logic lives in owning services (port 8087)
 ├── frontend/             React 18 + Vite SPA
 ├── docker-compose.yml
-├── .env.example          Copy to .env and fill in secrets
-└── LibrarySystem.postman_collection.json
 ```
