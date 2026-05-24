@@ -56,6 +56,7 @@ public class BookingService {
         String userEmail = resolveCurrentUserEmail(authentication);
         String studentId = resolveCurrentStudentId(authentication);
         Long userId = resolveCurrentUserId(authentication);
+        String userName = resolveCurrentUserName(authentication);
         SeatEntity seat = seatRepository.findByIdAndDeletedFalse(request.getSeatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found with id " + request.getSeatId()));
 
@@ -68,6 +69,7 @@ public class BookingService {
                 .userId(userId)
                 .userEmail(userEmail)
                 .studentId(studentId)
+                .userName(userName)
                 .seat(seat)
                 .bookingDate(request.getBookingDate())
                 .timeSlot(request.getTimeSlot())
@@ -201,13 +203,15 @@ public class BookingService {
         return csv.toString();
     }
 
-    public Page<BookingResponse> getAllBookings(LocalDate date,
+    public Page<BookingResponse> getAllBookings(LocalDate dateFrom,
+            LocalDate dateTo,
             BookingStatus status,
             SeatZone zone,
             String studentId,
+            String search,
             Pageable pageable) {
         return bookingRepository.findAll(
-                BookingSpecifications.forAdminList(date, status, zone, studentId), pageable)
+                BookingSpecifications.forAdminList(dateFrom, dateTo, status, zone, studentId, search), pageable)
                 .map(this::toResponse);
     }
 
@@ -338,6 +342,18 @@ public class BookingService {
         return null;
     }
 
+    private String resolveCurrentUserName(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        Object details = authentication.getDetails();
+        if (details instanceof Map<?, ?> map) {
+            Object name = map.get("fullName");
+            if (name instanceof String s) return s;
+        }
+        return null;
+    }
+
     private boolean isAdmin(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;
@@ -352,6 +368,7 @@ public class BookingService {
                 .id(booking.getId())
                 .userEmail(booking.getUserEmail())
                 .studentId(booking.getStudentId())
+                .studentName(booking.getUserName())
                 .seatId(booking.getSeat().getId())
                 .seatNumber(booking.getSeat().getSeatNumber())
                 .zone(booking.getSeat().getZone())

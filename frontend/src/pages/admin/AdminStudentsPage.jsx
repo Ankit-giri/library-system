@@ -30,10 +30,10 @@ function MembershipChip({ status, expiry }) {
     return <span className={cls}>{label}</span>;
 }
 
-function SkeletonRow() {
+function SkeletonRow({ cols = 7 }) {
     return (
         <tr className="as-skel-row">
-            {Array.from({ length: 7 }, (_, i) => (
+            {Array.from({ length: cols }, (_, i) => (
                 <td key={i}><div className="as-skel" /></td>
             ))}
         </tr>
@@ -196,6 +196,84 @@ function DetailModal({ student, onClose }) {
     );
 }
 
+/* ── Admins table ────────────────────────── */
+function AdminsTable({ currentUserEmail }) {
+    const [admins, setAdmins] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/api/admin/students/admins')
+            .then(r => setAdmins(r.data ?? []))
+            .catch(() => setAdmins([]))
+            .finally(() => setLoading(false));
+    }, []);
+
+    return (
+        <div className="as-section mb-6">
+            <div className="as-section-hd">
+                <h2 className="as-section-title">Administrators</h2>
+                <span className="as-section-count">{admins.length}</span>
+            </div>
+            <div className="as-card">
+                <div className="table-responsive">
+                    <table className="table table-hover mb-0 as-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Admin</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading
+                                ? Array.from({ length: 2 }, (_, i) => <SkeletonRow key={i} cols={5} />)
+                                : admins.length === 0
+                                    ? (
+                                        <tr>
+                                            <td colSpan={5}>
+                                                <div className="as-empty">
+                                                    <p className="as-empty__title">No admins found</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                    : admins.map((a, idx) => (
+                                        <tr key={a.id}>
+                                            <td className="as-cell-num">{idx + 1}</td>
+                                            <td>
+                                                <div className="as-student-cell">
+                                                    <div className="as-student-avatar as-student-avatar--admin">
+                                                        {a.fullName?.[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="as-cell-primary">{a.fullName}</div>
+                                                        <div className="as-cell-sub">Administrator</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="as-cell-email">{a.email}</td>
+                                            <td>{formatDate(a.createdAt)}</td>
+                                            <td>
+                                                <span className={`as-chip ${a.active ? 'as-chip--active' : 'as-chip--expired'}`}>
+                                                    {a.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                                {a.email === currentUserEmail && (
+                                                    <span className="as-you-badge">You</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ── Main page ───────────────────────────── */
 export default function AdminStudentsPage() {
     const { currentUser } = useAuth();
@@ -212,13 +290,11 @@ export default function AdminStudentsPage() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [actionLoading, setActLoading]  = useState(null);
 
-    /* Debounce search */
     useEffect(() => {
         const t = setTimeout(() => { setDebSearch(search); setPage(0); }, 320);
         return () => clearTimeout(t);
     }, [search]);
 
-    /* Reset page on filter change */
     useEffect(() => { setPage(0); }, [statusFilter]);
 
     const fetchStudents = useCallback(async () => {
@@ -262,7 +338,7 @@ export default function AdminStudentsPage() {
         setActLoading(deleteTarget.id);
         try {
             await api.delete(`/api/admin/students/${deleteTarget.id}`);
-            toast.success(`${deleteTarget.name} deleted.`);
+            toast.success(`${deleteTarget.fullName} deleted.`);
             setDeleteTarget(null);
             fetchStudents();
         } catch {
@@ -279,8 +355,17 @@ export default function AdminStudentsPage() {
             <div className="as-page-hd">
                 <div>
                     <h1 className="as-page-hd__title">Students</h1>
-                    <p className="as-page-hd__sub">{totalElements} registered members</p>
+                    <p className="as-page-hd__sub">{totalElements} registered students</p>
                 </div>
+            </div>
+
+            {/* ── Admins section (above) ── */}
+            <AdminsTable currentUserEmail={currentUser?.email} />
+
+            {/* ── Students section header ── */}
+            <div className="as-section-hd mb-4">
+                <h2 className="as-section-title">Students</h2>
+                <span className="as-section-count">{totalElements}</span>
             </div>
 
             {/* ── Filters ── */}
@@ -320,7 +405,7 @@ export default function AdminStudentsPage() {
                 </div>
             )}
 
-            {/* ── Table ── */}
+            {/* ── Students table ── */}
             <div className="as-card">
                 <div className="table-responsive">
                     <table className="table table-hover mb-0 as-table">
@@ -350,9 +435,7 @@ export default function AdminStudentsPage() {
                                             </td>
                                         </tr>
                                     )
-                                    : students.map((s, idx) => {
-                                        const isSelf = s.email === currentUser?.email;
-                                        return (
+                                    : students.map((s, idx) => (
                                         <tr key={s.id}>
                                             <td className="as-cell-num">{page * PAGE_SIZE + idx + 1}</td>
                                             <td>
@@ -377,37 +460,31 @@ export default function AdminStudentsPage() {
                                                     >
                                                         Details
                                                     </button>
-                                                    {!isSelf && (
-                                                        <button
-                                                            className={`as-action-btn ${s.active ? 'as-action-btn--deactivate' : 'as-action-btn--activate'}`}
-                                                            onClick={() => handleToggleStatus(s)}
-                                                            disabled={actionLoading === s.id}
-                                                            title={s.active ? 'Deactivate' : 'Activate'}
-                                                        >
-                                                            {actionLoading === s.id ? '…' : s.active ? 'Deactivate' : 'Activate'}
-                                                        </button>
-                                                    )}
-                                                    {!isSelf && (
-                                                        <button
-                                                            className="as-action-btn as-action-btn--delete"
-                                                            onClick={() => setDeleteTarget(s)}
-                                                            disabled={actionLoading === s.id}
-                                                            title="Delete"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        className={`as-action-btn ${s.active ? 'as-action-btn--deactivate' : 'as-action-btn--activate'}`}
+                                                        onClick={() => handleToggleStatus(s)}
+                                                        disabled={actionLoading === s.id}
+                                                        title={s.active ? 'Deactivate' : 'Activate'}
+                                                    >
+                                                        {actionLoading === s.id ? '…' : s.active ? 'Deactivate' : 'Activate'}
+                                                    </button>
+                                                    <button
+                                                        className="as-action-btn as-action-btn--delete"
+                                                        onClick={() => setDeleteTarget(s)}
+                                                        disabled={actionLoading === s.id}
+                                                        title="Delete"
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                        );
-                                    })
+                                    ))
                             }
                         </tbody>
                     </table>
                 </div>
 
-                {/* ── Pagination ── */}
                 {totalPages > 1 && (
                     <div className="as-pagination">
                         <p className="as-pagination__info">

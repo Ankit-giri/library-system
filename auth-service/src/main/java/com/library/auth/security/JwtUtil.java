@@ -36,6 +36,10 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails, String studentId, Long userId) {
+        return generateToken(userDetails, studentId, userId, null);
+    }
+
+    public String generateToken(UserDetails userDetails, String studentId, Long userId, String fullName) {
         long expiration = determineExpiration(userDetails);
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
@@ -44,6 +48,9 @@ public class JwtUtil {
         }
         if (userId != null) {
             claims.put("userId", userId);
+        }
+        if (fullName != null) {
+            claims.put("fullName", fullName);
         }
         Date issuedAt = Date.from(Instant.now());
         Date expiresAt = new Date(issuedAt.getTime() + expiration);

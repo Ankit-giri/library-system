@@ -76,7 +76,7 @@ public class AuthService implements UserDetailsService {
 
         UserEntity saved = userRepository.save(user);
         UserDetails userDetails = buildUserDetails(saved);
-        String token = jwtUtil.generateToken(userDetails, saved.getStudentId(), saved.getId());
+        String token = jwtUtil.generateToken(userDetails, saved.getStudentId(), saved.getId(), saved.getFullName());
         return createAuthResponse(saved, token);
     }
 
@@ -100,7 +100,7 @@ public class AuthService implements UserDetailsService {
         }
 
         UserDetails userDetails = buildUserDetails(user);
-        String token = jwtUtil.generateToken(userDetails, user.getStudentId(), user.getId());
+        String token = jwtUtil.generateToken(userDetails, user.getStudentId(), user.getId(), user.getFullName());
         return createAuthResponse(user, token);
     }
 

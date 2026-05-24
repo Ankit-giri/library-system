@@ -116,6 +116,12 @@ body::-webkit-scrollbar-thumb {
 ══════════════════════════════════════════════════ */
 [data-theme="dark"] {
 
+    /* ── Bootstrap root variable overrides ── */
+    --bs-body-bg: var(--color-bg);
+    --bs-body-color: var(--color-text-primary);
+    --bs-border-color: var(--color-border);
+    --bs-secondary-color: var(--color-text-secondary);
+
     /* ── Navbar ── */
     .lib-navbar {
         background: rgba(28, 28, 30, 0.85);
@@ -181,10 +187,62 @@ body::-webkit-scrollbar-thumb {
     .ad-error-bar { background: rgba(255,59,48,0.12); border-color: rgba(255,59,48,0.25); }
 
     /* ── Tables ── */
-    .table { color: var(--color-text-primary); }
-    .table thead th { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text-secondary); }
-    .table td, .table th { border-color: var(--color-border); }
-    .table-hover tbody tr:hover { background: rgba(255,255,255,0.04); }
+    /*
+     * Bootstrap 5 uses --bs-table-bg and a box-shadow inset trick on every cell.
+     * Setting background-color alone is not enough; we must override the CSS variable.
+     * Also fix rgba(0,0,0,...) cell borders which become invisible on dark backgrounds.
+     */
+    .table {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--color-text-primary);
+        --bs-table-border-color: var(--color-border);
+        --bs-table-striped-bg: rgba(255,255,255,0.03);
+        --bs-table-striped-color: var(--color-text-primary);
+        --bs-table-hover-bg: rgba(255,255,255,0.05);
+        --bs-table-hover-color: var(--color-text-primary);
+        --bs-table-active-bg: rgba(255,255,255,0.06);
+        color: var(--color-text-primary);
+        border-color: var(--color-border);
+    }
+
+    /* thead headers */
+    .table thead th,
+    .ad-table thead th,
+    .as-table thead th,
+    .ab-table thead th,
+    .ar-table thead th,
+    .fr-table thead th {
+        background: var(--color-bg) !important;
+        border-color: var(--color-border) !important;
+        color: var(--color-text-muted);
+    }
+
+    /* body cells — replace hardcoded rgba(0,0,0,...) borders */
+    .table td, .table th,
+    .ad-table td, .ad-table th,
+    .as-table td, .as-table th,
+    .ab-table td, .ab-table th,
+    .ar-table td, .ar-table th,
+    .fr-table td, .fr-table th {
+        border-color: var(--color-border) !important;
+        color: var(--color-text-primary);
+    }
+
+    /* row hover */
+    .table-hover tbody tr:hover > *,
+    .ad-table tbody tr:hover td,
+    .as-table tbody tr:hover td,
+    .ab-table tbody tr:hover td,
+    .ar-table tbody tr:hover td,
+    .fr-table tbody tr:hover td {
+        background: rgba(255,255,255,0.05) !important;
+        --bs-table-bg: rgba(255,255,255,0.05);
+    }
+
+    /* table-responsive wrapper background */
+    .table-responsive {
+        background: var(--color-surface);
+    }
 
     /* ── Inputs & forms ── */
     input, select, textarea {
@@ -230,7 +288,7 @@ body::-webkit-scrollbar-thumb {
 
     /* ── Admin pages ── */
     .ab-filter-card, .as-filter-bar, .ar-filter-card, .apl-modal,
-    .ar-card, .ab-table-card { background: var(--color-surface); border-color: var(--color-border); }
+    .ar-card, .ab-table-card, .ab-card, .as-card, .ar-table-card { background: var(--color-surface); border-color: var(--color-border); }
     .ab-filter input, .ab-filter select,
     .as-filter-bar input, .as-filter-bar select,
     .ar-filter-card input, .ar-filter-card select {
@@ -253,4 +311,62 @@ body::-webkit-scrollbar-thumb {
     .sb-seat--skeleton::after {
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
     }
+
+    /* ── Students page — action buttons ── */
+    .as-action-btn--deactivate {
+        background: rgba(217,119,6,0.18);
+        color: #fbbf24;
+    }
+    .as-action-btn--deactivate:not(:disabled):hover {
+        background: #d97706;
+        color: #fff;
+    }
+    .as-action-btn--delete {
+        background: rgba(255,59,48,0.15);
+        color: var(--color-danger);
+    }
+    .as-action-btn--delete:not(:disabled):hover {
+        background: var(--color-danger);
+        color: #fff;
+    }
+    .as-action-btn--activate {
+        background: rgba(5,150,105,0.18);
+        color: #34d399;
+    }
+    .as-action-btn--activate:not(:disabled):hover {
+        background: #059669;
+        color: #fff;
+    }
+
+    /* ── Students page — membership chips ── */
+    .as-chip--active   { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-chip--warn     { background: rgba(217,119,6,0.18);  color: #fbbf24; }
+    .as-chip--expired  { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+
+    /* ── Students page — badges inside detail modal ── */
+    .as-badge--confirmed { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .as-badge--cancelled { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+    .as-badge--success   { background: rgba(5,150,105,0.18);  color: #34d399; }
+    .as-badge--failed    { background: rgba(255,59,48,0.15);  color: var(--color-danger); }
+
+    /* ── Students page — error bar ── */
+    .as-error-bar { background: rgba(255,59,48,0.12); border-color: rgba(255,59,48,0.25); }
+
+    /* ── Students page — skeleton ── */
+    .as-skel {
+        background: linear-gradient(90deg, var(--color-border) 25%, rgba(255,255,255,0.06) 50%, var(--color-border) 75%);
+    }
+
+    /* ── Plans page — "Best Value" badge ── */
+    .apl-card__badge-text {
+        background: rgba(255,188,68,0.2);
+        color: #fbbf24;
+    }
+
+    /* ── Plans page — featured card ── */
+    .apl-card--featured { background: rgba(0,113,227,0.06); }
+
+    /* ── Plans page — action button hover ── */
+    .apl-action-btn--deactivate { background: rgba(255,59,48,0.15); color: var(--color-danger); }
 }

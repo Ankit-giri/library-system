@@ -41,7 +41,7 @@ public class AdminDashboardService {
     }
 
     public AdminDashboardDTO getDashboard() {
-        long totalStudents = userRepository.countByDeletedFalse();
+        long totalStudents = userRepository.countByDeletedFalseAndRole(com.library.adminservice.entity.UserRole.STUDENT);
         int activeBookingsToday = fetchActiveBookingsToday();
         List<Map<String, Object>> occupancy = fetchSeatOccupancy();
         int availableSeats = occupancy.stream().mapToInt(e -> toInt(e.get("available"))).sum();

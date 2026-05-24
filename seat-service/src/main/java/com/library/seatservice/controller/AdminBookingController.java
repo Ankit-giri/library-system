@@ -37,16 +37,18 @@ public class AdminBookingController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<BookingResponse>> getBookings(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String zone,
             @RequestParam(required = false) String studentId,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         BookingStatus bookingStatus = status != null ? BookingStatus.valueOf(status.toUpperCase()) : null;
         SeatZone seatZone = zone != null ? SeatZone.valueOf(zone.toUpperCase()) : null;
-        return ResponseEntity.ok(bookingService.getAllBookings(date, bookingStatus, seatZone, studentId,
-                PageRequest.of(page, size)));
+        return ResponseEntity.ok(bookingService.getAllBookings(dateFrom, dateTo, bookingStatus, seatZone, studentId,
+                search, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
     }
 
     @GetMapping("/recent")
@@ -54,7 +56,7 @@ public class AdminBookingController {
     public ResponseEntity<Page<BookingResponse>> getRecentBookings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
-        return ResponseEntity.ok(bookingService.getAllBookings(null, null, null, null,
+        return ResponseEntity.ok(bookingService.getAllBookings(null, null, null, null, null, null,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "bookingDate"))));
     }
 

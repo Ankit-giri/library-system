@@ -189,7 +189,7 @@ function AdminLayout() {
 
                             <button
                                 className="al-profile-menu__item"
-                                onClick={() => { setProfileOpen(false); navigate('/admin'); }}
+                                onClick={() => { setProfileOpen(false); navigate('/profile'); }}
                             >
                                 <span className="al-profile-menu__icon">{Icons.profile}</span>
                                 Profile

@@ -3,6 +3,7 @@ package com.library.adminservice.controller;
 import com.library.adminservice.dto.StudentDetailDTO;
 import com.library.adminservice.dto.StudentSummaryDTO;
 import com.library.adminservice.service.AdminStudentService;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,12 @@ public class AdminStudentController {
 
     public AdminStudentController(AdminStudentService adminStudentService) {
         this.adminStudentService = adminStudentService;
+    }
+
+    @GetMapping("/admins")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<StudentSummaryDTO>> getAdmins() {
+        return ResponseEntity.ok(adminStudentService.findAdmins());
     }
 
     @GetMapping
