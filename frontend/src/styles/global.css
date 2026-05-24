@@ -407,4 +407,23 @@ body::-webkit-scrollbar-thumb {
 
     /* ── Seat booking — confirmation bar ── */
     .sb-bar__inner { background: var(--color-surface); }
+
+    /* ── Auth pages (login / register) ── */
+    .auth-page { background: var(--color-bg); }
+    .auth-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .auth-input {
+        background: var(--color-bg);
+        border-color: var(--color-border);
+        color: var(--color-text-primary);
+    }
+    .auth-input:focus {
+        background: var(--color-bg);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+    }
+    .auth-input--error { background: rgba(255,59,48,0.06); }
 }
