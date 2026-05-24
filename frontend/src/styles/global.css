@@ -286,6 +286,14 @@ body::-webkit-scrollbar-thumb {
     .fr-card-wrap { background: var(--color-surface); }
     .fr-pay-summary { background: var(--color-bg); }
 
+    /* ── Admin bookings — action buttons & status badges ── */
+    .ab-action-btn--cancel { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+    .ab-action-btn--cancel:hover { background: var(--color-danger); color: #fff; }
+    .ab-badge--confirmed { background: rgba(5,150,105,0.18); color: #34d399; }
+    .ab-badge--completed { background: rgba(107,114,128,0.2); color: var(--color-text-secondary); }
+    .ab-badge--cancelled { background: rgba(255,59,48,0.15); color: var(--color-danger); }
+    .ab-badge--pending   { background: rgba(217,119,6,0.18);  color: #fbbf24; }
+
     /* ── Admin pages ── */
     .ab-filter-card, .as-filter-bar, .ar-filter-card, .apl-modal,
     .ar-card, .ab-table-card, .ab-card, .as-card, .ar-table-card { background: var(--color-surface); border-color: var(--color-border); }

@@ -3,15 +3,16 @@ import PageHeader from '../components/PageHeader';
 
 function InfoRow({ label, value }) {
     return (
-        <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border, #e5e7eb)' }}>
-            <span style={{ minWidth: 140, fontWeight: 600, color: 'var(--text-muted, #6b7280)', fontSize: '0.875rem' }}>{label}</span>
-            <span style={{ color: 'var(--text, #111827)' }}>{value || '—'}</span>
+        <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ minWidth: 140, fontWeight: 600, color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{label}</span>
+            <span style={{ color: 'var(--color-text-primary)' }}>{value || '—'}</span>
         </div>
     );
 }
 
 function ProfilePage() {
-    const { currentUser } = useAuth();
+    const { currentUser, isAdmin } = useAuth();
+    const dashboardPath = isAdmin ? '/admin' : '/dashboard';
 
     return (
         <div className="container-fluid px-4 py-4">
@@ -19,14 +20,14 @@ function ProfilePage() {
                 title="My Profile"
                 subtitle="Your account details"
                 breadcrumbs={[
-                    { label: 'Dashboard', to: '/dashboard' },
+                    { label: 'Dashboard', to: dashboardPath },
                     { label: 'Profile' },
                 ]}
             />
 
             <div className="row justify-content-center">
                 <div className="col-12 col-md-8 col-lg-6">
-                    <div className="card shadow-sm border-0">
+                    <div className="card border-0" style={{ background: 'var(--color-surface)', boxShadow: 'var(--shadow-card)' }}>
                         <div className="card-body p-4">
                             <div className="d-flex align-items-center gap-3 mb-4">
                                 <div style={{

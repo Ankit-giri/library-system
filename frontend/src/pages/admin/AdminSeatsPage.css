@@ -77,10 +77,11 @@
     margin: 0;
     color: var(--color-text-muted);
 }
-.ase-stat--total   .ase-stat__value { color: var(--color-text-primary); }
-.ase-stat--avail   .ase-stat__value { color: var(--color-success); }
-.ase-stat--booked  .ase-stat__value { color: var(--color-primary); }
-.ase-stat--maint   .ase-stat__value { color: var(--color-warning); }
+.ase-stat--total    .ase-stat__value { color: var(--color-text-primary); }
+.ase-stat--avail    .ase-stat__value { color: var(--color-success); }
+.ase-stat--booked   .ase-stat__value { color: var(--color-primary); }
+.ase-stat--reserved .ase-stat__value { color: var(--color-danger); }
+.ase-stat--maint    .ase-stat__value { color: var(--color-warning); }
 
 /* ── Zone filter ─────────────────────────── */
 .ase-zone-bar {

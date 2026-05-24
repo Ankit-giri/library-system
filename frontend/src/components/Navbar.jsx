@@ -110,18 +110,22 @@ function Navbar() {
                 <div className="collapse navbar-collapse" id="libNavbar">
                     {/* Center links */}
                     <ul className="navbar-nav mx-auto mb-2 mb-lg-0 lib-nav-links">
-                        <li className="nav-item">
-                            <NavLink to="/dashboard" end className={navCls}>Home</NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/seat-booking" className={navCls}>Seat Booking</NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/my-bookings" className={navCls}>My Bookings</NavLink>
-                        </li>
-                        <li className="nav-item">
-                            <NavLink to="/fee-renewal" className={navCls}>Fee Renewal</NavLink>
-                        </li>
+                        {!isAdmin && (
+                            <>
+                                <li className="nav-item">
+                                    <NavLink to="/dashboard" end className={navCls}>Home</NavLink>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink to="/seat-booking" className={navCls}>Seat Booking</NavLink>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink to="/my-bookings" className={navCls}>My Bookings</NavLink>
+                                </li>
+                                <li className="nav-item">
+                                    <NavLink to="/fee-renewal" className={navCls}>Fee Renewal</NavLink>
+                                </li>
+                            </>
+                        )}
                         {isAdmin && (
                             <li className="nav-item">
                                 <NavLink
@@ -130,7 +134,7 @@ function Navbar() {
                                         `nav-link lib-nav-link lib-nav-admin${isActive ? ' active' : ''}`
                                     }
                                 >
-                                    Admin
+                                    ← Back to Admin
                                 </NavLink>
                             </li>
                         )}

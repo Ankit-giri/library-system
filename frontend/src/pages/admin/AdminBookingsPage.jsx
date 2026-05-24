@@ -92,6 +92,20 @@ function CancelModal({ booking, onConfirm, onClose, loading }) {
 
 /* ── Detail modal ────────────────────────── */
 function DetailModal({ booking, onClose }) {
+    const [studentName, setStudentName] = useState(booking.studentName ?? null);
+
+    useEffect(() => {
+        if (studentName) return;
+        const query = booking.studentId || booking.userEmail;
+        if (!query) return;
+        api.get('/api/admin/students', { params: { search: query, size: 1 } })
+            .then(r => {
+                const hit = (r.data?.content ?? r.data ?? [])[0];
+                if (hit?.fullName) setStudentName(hit.fullName);
+            })
+            .catch(() => {});
+    }, [booking.studentId, booking.userEmail]);
+
     return (
         <div className="ab-modal-backdrop" onClick={onClose}>
             <div className="ab-modal ab-modal--md" onClick={e => e.stopPropagation()}>
@@ -108,7 +122,7 @@ function DetailModal({ booking, onClose }) {
                         <div className="ab-detail-section">
                             <p className="ab-detail-section__title">Student</p>
                             <div className="ab-detail-item">
-                                <span>Name</span><strong>{booking.studentName ?? '—'}</strong>
+                                <span>Name</span><strong>{studentName ?? '—'}</strong>
                             </div>
                             <div className="ab-detail-item">
                                 <span>Student ID</span><strong>{booking.studentId ?? '—'}</strong>

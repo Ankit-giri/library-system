@@ -236,6 +236,7 @@ export default function AdminSeatsPage() {
     const [selectedSeat, setSelected]   = useState(null);
     const [showAdd, setShowAdd]         = useState(false);
     const [actionLoading, setActLoad]   = useState(false);
+    const [todayBooked, setTodayBooked] = useState(null);
 
     const fetchSeats = useCallback(async () => {
         setLoading(true);
@@ -253,6 +254,13 @@ export default function AdminSeatsPage() {
     }, [zoneFilter]);
 
     useEffect(() => { fetchSeats(); }, [fetchSeats]);
+
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        api.get('/api/admin/bookings', { params: { dateFrom: today, dateTo: today, status: 'ACTIVE', size: 1 } })
+            .then(r => setTodayBooked(r.data.totalElements ?? 0))
+            .catch(() => setTodayBooked(0));
+    }, []);
 
     const handleStatusSave = async (seat, newStatus) => {
         setActLoad(true);
@@ -300,7 +308,7 @@ export default function AdminSeatsPage() {
     /* Stats */
     const total       = seats.length;
     const available   = seats.filter(s => s.status === 'AVAILABLE').length;
-    const booked      = seats.filter(s => s.status === 'BOOKED').length;
+    const reserved    = seats.filter(s => s.status === 'UNAVAILABLE').length;
     const maintenance = seats.filter(s => s.status === 'MAINTENANCE').length;
 
     return (
@@ -321,13 +329,14 @@ export default function AdminSeatsPage() {
             {/* ── Summary stats ── */}
             <div className="ase-stats">
                 {[
-                    { label: 'Total',       value: total,       cls: 'ase-stat--total'   },
-                    { label: 'Available',   value: available,   cls: 'ase-stat--avail'   },
-                    { label: 'Booked',      value: booked,      cls: 'ase-stat--booked'  },
-                    { label: 'Maintenance', value: maintenance, cls: 'ase-stat--maint'   },
+                    { label: 'Total',        value: total,       cls: 'ase-stat--total'   },
+                    { label: 'Available',    value: available,   cls: 'ase-stat--avail'   },
+                    { label: 'Booked Today', value: todayBooked, cls: 'ase-stat--booked'  },
+                    { label: 'Reserved',     value: reserved,    cls: 'ase-stat--reserved' },
+                    { label: 'Maintenance',  value: maintenance, cls: 'ase-stat--maint'   },
                 ].map(s => (
                     <div key={s.label} className={`ase-stat ${s.cls}`}>
-                        <p className="ase-stat__value">{loading ? '—' : s.value}</p>
+                        <p className="ase-stat__value">{loading || s.value === null ? '—' : s.value}</p>
                         <p className="ase-stat__label">{s.label}</p>
                     </div>
                 ))}
